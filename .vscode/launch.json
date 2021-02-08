@@ -9,10 +9,9 @@
 			"type": "go",
 			"request": "launch",
 			"mode": "debug",
-			"program": "${workspaceFolder}/ch1/fetch",
+			"program": "${workspaceFolder}/ch1/popcount",
 			"args": [
-				"ht1tps://jsonplaceholder.typicode.com/posts/21",
-				"https://jsonplaceholder.typicode.com/posts/1"
+				"353"
 			]
 		}
 	]
