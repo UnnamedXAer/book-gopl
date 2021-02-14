@@ -10,10 +10,7 @@
 			"request": "launch",
 			"mode": "debug",
 			"program": "${file}",
-			"args": [
-				"-n",
-				"Bad Boys"
-			]
+			"args": []
 		},
 		{
 			"name": "Launch Package",
