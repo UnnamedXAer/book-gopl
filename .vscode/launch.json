@@ -9,7 +9,11 @@
 			"type": "go",
 			"request": "launch",
 			"mode": "debug",
-			"program": "${file}"
+			"program": "${file}",
+			"args": [
+				"-n",
+				"Bad Boys"
+			]
 		},
 		{
 			"name": "Launch Package",
@@ -17,9 +21,7 @@
 			"request": "launch",
 			"mode": "debug",
 			"program": "${workspaceFolder}/ch4/slices",
-			"args": [
-				"えええ","えええ"
-			]
+			"args": []
 		}
 	]
 }
