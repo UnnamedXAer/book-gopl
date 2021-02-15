@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>{{.PageTitle}}</title>
+</head>
+<style>
+	*{
+		box-sizing: border-box;
+	}
+
+	html, body {
+		width: 100vw;
+		margin: 0;
+		padding: 0;
+	}
+</style>
+<body>
+	<nav style="height: 60px;width: 100%; background-color: burlywood;">
+		<div style="font-size: xx-large; font-weight: bold;">{{.AppName}}</div>
+	</nav>
+	<main style="margin-bottom: 60px;">{{.PageTemplate}}</main>
+	<footer style="height: 60px;width: 100%; background-color: burlywood; position: absolute; bottom: 0;">Copyright
+		{{.Author}}</footer>
+</body>
+
+</html>
