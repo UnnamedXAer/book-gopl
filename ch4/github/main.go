@@ -3,8 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	htmlTemplate "html/template"
+	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 )
@@ -58,15 +61,59 @@ func SearchIssues(terms []string) (*IssuesSearchResults, error) {
 	return &results, nil
 }
 
+func daysAgo(t time.Time) int {
+	return int(time.Since(t).Hours() / 24)
+}
+
+const temp = `{{.TotalCount}} issues:
+{{range .Items}}-----------------------------
+Number:{{.Number}}
+User:{{.User.Login}}
+Title:{{.Title | printf "%.64s"}}
+Age:{{.CreatedAt | daysAgo}} days
+{{end}}`
+
+var issuesList = htmlTemplate.Must(htmlTemplate.New("issuelist").Parse(`
+<H1>ISSUES</H1>
+<h3>{{.TotalCount}}</h3>
+<table>
+<tr style='text-align: left;'>
+	<th>State</th>
+	<th>User</th>
+	<th>Title</th>
+</tr>
+{{range .Items}}
+<tr>
+	<td>{{.State}}</td>
+	<td><a href="{{.User.HTMLURL}}">{{.User.Login}}</a></td>
+	<td><a href="{{.HTMLURL}}">{{.Title}}</a></td>
+</tr>
+{{end}}
+</table>
+`))
+
 func main() {
-	issueses, err := SearchIssues([]string{"is:open", "json", "decoder"})
+	issues, err := SearchIssues([]string{"is:open", "repo:golang/go 3133 10535"})
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
+	}
+	// printIssuesByDateRange(issues)
+
+	// report, err := template.New("report").Funcs(template.FuncMap{"daysAgo": daysAgo}).Parse(temp)
+	// if err != nil {
+	// log.Fatalln(err)
+	// }
+
+	if err := issuesList.Execute(os.Stdout, issues); err != nil {
+		log.Fatalln(err)
 	}
 
-	issYoungerThanMonth := make([]Issue, 0, issueses.TotalCount/3)
-	issYoungerThanYear := make([]Issue, 0, issueses.TotalCount/3)
-	issOlder := make([]Issue, 0, issueses.TotalCount/3)
+}
+
+func printIssuesByDateRange(issues *IssuesSearchResults) {
+	issYoungerThanMonth := make([]Issue, 0, issues.TotalCount/3)
+	issYoungerThanYear := make([]Issue, 0, issues.TotalCount/3)
+	issOlder := make([]Issue, 0, issues.TotalCount/3)
 
 	t := time.Now()
 	tMonthBack := time.Date(t.Year(), t.Month()-1, t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), t.Location())
@@ -76,7 +123,7 @@ func main() {
 	fmt.Println(tMonthBack.Format("01/02/2006 15:04:05"))
 	fmt.Println(tYearBack.Format("01/02/2006 15:04:05"))
 
-	for _, v := range issueses.Items {
+	for _, v := range issues.Items {
 
 		if v.CreatedAt.After(tMonthBack) {
 			issYoungerThanMonth = append(issYoungerThanMonth, *v)
