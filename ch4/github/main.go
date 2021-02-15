@@ -26,6 +26,10 @@ type Issue struct {
 	Body      string    // in Markdown format
 }
 
+func (is Issue) String() string {
+	return fmt.Sprintf("Created at: %s\nTitle: %q\nState: %q\n", is.CreatedAt.Format("01/02/2006 15:04:05"), is.Title, is.State)
+}
+
 type User struct {
 	Login   string
 	HTMLURL string `json:"html_url"`
@@ -60,7 +64,32 @@ func main() {
 		panic(err)
 	}
 
-	b, _ := json.MarshalIndent(issueses, "", "  ")
+	issYoungerThanMonth := make([]Issue, 0, issueses.TotalCount/3)
+	issYoungerThanYear := make([]Issue, 0, issueses.TotalCount/3)
+	issOlder := make([]Issue, 0, issueses.TotalCount/3)
 
-	fmt.Printf("%s", b)
+	t := time.Now()
+	tMonthBack := time.Date(t.Year(), t.Month()-1, t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), t.Location())
+	tYearBack := time.Date(t.Year()-1, t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), t.Location())
+
+	fmt.Println(t.Format("01/02/2006 15:04:05"))
+	fmt.Println(tMonthBack.Format("01/02/2006 15:04:05"))
+	fmt.Println(tYearBack.Format("01/02/2006 15:04:05"))
+
+	for _, v := range issueses.Items {
+
+		if v.CreatedAt.After(tMonthBack) {
+			issYoungerThanMonth = append(issYoungerThanMonth, *v)
+			continue
+		}
+		if v.CreatedAt.After(tYearBack) {
+			issYoungerThanYear = append(issYoungerThanYear, *v)
+			continue
+		}
+		issOlder = append(issOlder, *v)
+	}
+
+	fmt.Printf("\n\nIssues not older than a month:\n%s", issYoungerThanMonth)
+	fmt.Printf("\n\nIssues not older than a year:\n%s", issYoungerThanYear)
+	fmt.Printf("\n\nIssues at lease one year old:\n%s", issOlder)
 }
