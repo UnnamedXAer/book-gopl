@@ -1,22 +1,23 @@
+{{define "body"}}
 <div>
-	<h3>Welcome</h3>
+	<h3>Welcome {{.UserName}}</h3>
 
-	<article>
-		<section>
+	<article class="container">
+		<section class="jumbotron">
 			<h4>Find User</h4>
 			<form method="GET" action="/users">
 				<label>User Name: <input name="user-name" /></label>
 				<input type="submit" value="Submit" />
 			</form>
 		</section>
-		<section>
+		<section class="jumbotron">
 			<h4>Print issues</h4>
 			<form method="GET" action="/issues">
 				<label>Search keywords <textarea name="keywords" cols="30" rows="3"></textarea></label>
 				<input type="submit" value="Submit" />
 			</form>
 		</section>
-		<section>
+		<section class="jumbotron">
 			<h4>Print bugs</h4>
 			<form method="GET" action="/bugs">
 				<label>Search keywords <textarea name="keywords" cols="30" rows="3"></textarea></label>
@@ -25,3 +26,4 @@
 		</section>
 	</article>
 </div>
+{{end}}

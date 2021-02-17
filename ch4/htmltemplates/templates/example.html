@@ -1,0 +1,11 @@
+{{- /* Go Template file */ -}}
+{{define "title"}}A Go 🐼 Title{{end}}
+
+{{define "body"}}
+<h1>Hello {{if .Name}} {{.Name}} {{- else}} Anonymous1 {{- end}} from a templated page 🏗</h1>
+<ul>
+	{{range .Items}}
+	<li>{{.DueDate}} - {{.Title}}</li>
+	{{end}}
+</ul>
+{{end}}

@@ -2,17 +2,89 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
+
+	"github.com/unnamedxaer/book-gopl/ch4/ghweb/web/views"
 )
 
-func main() {
+var (
+	index      *views.View
+	contact    *views.View
+	layoutsDir = "web/layouts"
+	l          *log.Logger
+)
 
-	http.HandleFunc("/", homeHandler)
+var cnt int
 
-	http.ListenAndServe(":3030", nil)
+// ViewData represents data passed to template
+type ViewData struct {
+	PageTitle string
+	Author    string
+	UserName  string
+	AppName   string
 }
 
-func homeHandler(w http.ResponseWriter, r *http.Request) {
-	x, err := R
-	fmt.Fprint(w, "hello home")
+func main() {
+	l = log.New(os.Stdout, "> ", log.LstdFlags)
+
+	// http.HandleFunc("/favicon.ico", faviconHandler)
+	index = views.NewView("bootstrap", "web/views/index.html")
+	contact = views.NewView("bootstrap", "web/views/contact.html")
+
+	staticHandler := http.StripPrefix("/static/", http.FileServer(http.Dir("./static")))
+	http.Handle("/static/", staticHandler)
+
+	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("/contact", contactHandler)
+
+	l.Println("Server available on http://localhost:3030")
+	err := http.ListenAndServe(":3030", nil)
+	checkErr(err)
+}
+
+func faviconHandler(w http.ResponseWriter, r *http.Request) {
+	b, err := ioutil.ReadFile("./web/assets/favicon.ico")
+	if err != nil {
+		responseOn500Error(w, err)
+		return
+	}
+
+	fmt.Fprint(w, b)
+}
+
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	cnt++
+	fmt.Println(cnt, "/", r.URL.Path)
+
+	v := ViewData{
+		PageTitle: "Home",
+		Author:    "Me",
+		UserName:  "UnnamedXAer",
+		AppName:   "Github Data",
+	}
+
+	err := index.Render(w, v)
+	if err != nil {
+		responseOn500Error(w, err)
+	}
+}
+
+func contactHandler(w http.ResponseWriter, r *http.Request) {
+	cnt++
+	fmt.Println(cnt, "/contact", r.URL.Path)
+
+	v := ViewData{
+		PageTitle: "Contact",
+		Author:    "Me",
+		UserName:  "UnnamedXAer",
+		AppName:   "Github Data",
+	}
+
+	err := contact.Render(w, v)
+	if err != nil {
+		responseOn500Error(w, err)
+	}
 }
