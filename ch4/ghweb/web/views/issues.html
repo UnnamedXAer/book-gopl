@@ -1,0 +1,18 @@
+{{define "body"}}
+<div>
+	<h3>Issues {{.ProjectTitle}}</h3>
+
+	<section class="jumbotron">
+		{{if .Keywords}}
+		<ul>
+			{{range .Keywords}}
+			<li>{{.}}</li>
+			{{end}}
+		</ul>
+		{{else}}
+		<p class="alert alert-warning">Missing keywords!</p>
+		{{end}}
+
+	</section>
+</div>
+{{end}}

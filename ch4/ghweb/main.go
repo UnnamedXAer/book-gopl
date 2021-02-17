@@ -21,10 +21,12 @@ var cnt int
 
 // ViewData represents data passed to template
 type ViewData struct {
-	PageTitle string
-	Author    string
-	UserName  string
-	AppName   string
+	PageTitle    string
+	Author       string
+	UserName     string
+	AppName      string
+	ProjectTitle string
+	Keywords     []string
 }
 
 func main() {
@@ -33,12 +35,14 @@ func main() {
 	// http.HandleFunc("/favicon.ico", faviconHandler)
 	index = views.NewView("bootstrap", "web/views/index.html")
 	contact = views.NewView("bootstrap", "web/views/contact.html")
+	contact = views.NewView("bootstrap", "web/views/issues.html")
 
 	staticHandler := http.StripPrefix("/static/", http.FileServer(http.Dir("./static")))
 	http.Handle("/static/", staticHandler)
 
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/contact", contactHandler)
+	http.HandleFunc("/issues", issuesHandler)
 
 	l.Println("Server available on http://localhost:3030")
 	err := http.ListenAndServe(":3030", nil)
@@ -74,7 +78,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 func contactHandler(w http.ResponseWriter, r *http.Request) {
 	cnt++
-	fmt.Println(cnt, "/contact", r.URL.Path)
+	fmt.Println(cnt, r.URL.Path)
 
 	v := ViewData{
 		PageTitle: "Contact",
@@ -84,6 +88,30 @@ func contactHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := contact.Render(w, v)
+	if err != nil {
+		responseOn500Error(w, err)
+	}
+}
+
+func issuesHandler(w http.ResponseWriter, r *http.Request) {
+	cnt++
+	fmt.Println(cnt, r.URL.Path)
+	err := r.ParseForm()
+	if err != nil {
+		responseOn500Error(w, err)
+	}
+	k := r.Form["keywords"]
+
+	v := ViewData{
+		PageTitle:    "Contact",
+		Author:       "Me",
+		UserName:     "UnnamedXAer",
+		AppName:      "Github Data",
+		ProjectTitle: "FTS2020",
+		Keywords:     k,
+	}
+
+	err = contact.Render(w, v)
 	if err != nil {
 		responseOn500Error(w, err)
 	}
