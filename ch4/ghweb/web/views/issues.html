@@ -1,16 +1,67 @@
 {{define "body"}}
-<div>
-	<h3>Issues {{.ProjectTitle}}</h3>
 
+<div>
+	<h3>Issues {{.TotalCount}}</h3>
+	<p>Fetched at: {{.FetchedAt}}</p>
+	{{if .UserName}}
+	<section>
+		<table>
+			<tr>
+				<th>Username</th>
+				<td>{{.UserName}}</td>
+			</tr>
+			<tr>
+				<th>Repository</th>
+				<td>{{.RepoName}}</td>
+			</tr>
+		</table>
+	</section>
+	{{end}}
 	<section class="jumbotron">
-		{{if .Keywords}}
+		{{if .Items}}
 		<ul>
-			{{range .Keywords}}
-			<li>{{.}}</li>
+			{{range .Items}}
+			<li>
+				<article>
+					<details>
+						<summary style="font-size: 1.3em;"><a href="{{.HTMLURL}}" target="_blank"
+								title="{{.Title}}">{{.Title}}</a></summary>
+						<section>
+							<table style="font-size: 1.3em;">
+								<tr>
+									<th>Number</th>
+									<td>{{.Number}}</td>>
+								</tr>
+								<tr>
+									<th>Title</th>
+									<td>{{.Title}}</td>>
+								</tr>
+								<tr>
+									<th>State</th>
+									<td>{{.State}}</td>>
+								</tr>
+								<tr>
+									<th>User</th>
+									<td><a href="{{.User.HTMLURL}}" target="_blank"
+											title="{{.User.Login}} GitHub profile page">{{.User.Login}}</a>
+									</td>>
+								</tr>
+								<tr>
+									<th>CreatedAt</th>
+									<td>{{.CreatedAt}}</td>>
+								</tr>
+							</table>
+							<hr />
+							<h5>Content</h5>
+							<p style="font-size: 1em;">{{.Body}}</p>
+						</section>
+					</details>
+				</article>
+			</li>
 			{{end}}
 		</ul>
 		{{else}}
-		<p class="alert alert-warning">Missing keywords!</p>
+		<p class="alert alert-warning">No Issues!</p>
 		{{end}}
 
 	</section>

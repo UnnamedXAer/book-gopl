@@ -11,9 +11,21 @@
 			</form>
 		</section>
 		<section class="jumbotron">
-			<h4>Print issues</h4>
+			<h4>Find issues</h4>
 			<form method="GET" action="/issues">
-				<label>Search keywords <textarea name="keywords" cols="30" rows="3"></textarea></label>
+				<label>Search phrase<textarea name="keywords" cols="30" rows="3"
+						placeholder="open vscode-go"></textarea>
+				</label>
+				<div>
+					<p>Or by user/repo</p>
+				</div>
+				<label>Username
+					<input name="username" placeholder="unnamedxaer">
+				</label>
+				<label>Repository name
+					<input name="reponame" placeholder="lang-words">
+				</label>
+				<br />
 				<input type="submit" value="Submit" />
 			</form>
 		</section>

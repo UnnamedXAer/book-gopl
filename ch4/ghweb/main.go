@@ -13,20 +13,20 @@ import (
 var (
 	index      *views.View
 	contact    *views.View
+	issue      *views.View
 	layoutsDir = "web/layouts"
 	l          *log.Logger
 )
 
 var cnt int
 
-// ViewData represents data passed to template
-type ViewData struct {
-	PageTitle    string
-	Author       string
-	UserName     string
-	AppName      string
-	ProjectTitle string
-	Keywords     []string
+// Data represents data passed to template
+type Data struct {
+	PageTitle string
+	Author    string
+	UserName  string
+	AppName   string
+	ViewData  interface{}
 }
 
 func main() {
@@ -35,7 +35,7 @@ func main() {
 	// http.HandleFunc("/favicon.ico", faviconHandler)
 	index = views.NewView("bootstrap", "web/views/index.html")
 	contact = views.NewView("bootstrap", "web/views/contact.html")
-	contact = views.NewView("bootstrap", "web/views/issues.html")
+	issue = views.NewView("bootstrap", "web/views/issues.html")
 
 	staticHandler := http.StripPrefix("/static/", http.FileServer(http.Dir("./static")))
 	http.Handle("/static/", staticHandler)
@@ -43,6 +43,12 @@ func main() {
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/contact", contactHandler)
 	http.HandleFunc("/issues", issuesHandler)
+
+	http.HandleFunc("/favicon.ico", func(rw http.ResponseWriter, r *http.Request) {
+		l.Println("/favicon.ico", "Referer:", r.Header["Referer"])
+		rw.Header().Set("Content-Type", "image/x-icon")
+		rw.Write([]byte{})
+	})
 
 	l.Println("Server available on http://localhost:3030")
 	err := http.ListenAndServe(":3030", nil)
@@ -63,7 +69,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	cnt++
 	fmt.Println(cnt, "/", r.URL.Path)
 
-	v := ViewData{
+	v := Data{
 		PageTitle: "Home",
 		Author:    "Me",
 		UserName:  "UnnamedXAer",
@@ -80,7 +86,7 @@ func contactHandler(w http.ResponseWriter, r *http.Request) {
 	cnt++
 	fmt.Println(cnt, r.URL.Path)
 
-	v := ViewData{
+	v := Data{
 		PageTitle: "Contact",
 		Author:    "Me",
 		UserName:  "UnnamedXAer",
@@ -96,23 +102,38 @@ func contactHandler(w http.ResponseWriter, r *http.Request) {
 func issuesHandler(w http.ResponseWriter, r *http.Request) {
 	cnt++
 	fmt.Println(cnt, r.URL.Path)
-	err := r.ParseForm()
+	// err := r.ParseForm()
+	// if err != nil {
+	// 	responseOn500Error(w, err)
+	// }
+
+	un := r.FormValue("username")
+	rn := r.FormValue("reponame")
+	var ir interface{}
+	var err error
+	if un != "" && rn != "" {
+		ir, err = fetchIssuesByUserRepo(un, rn)
+	} else {
+		k := r.Form["keywords"]
+		ir, err = fetchIssuesByKeywords(k)
+	}
 	if err != nil {
 		responseOn500Error(w, err)
-	}
-	k := r.Form["keywords"]
-
-	v := ViewData{
-		PageTitle:    "Contact",
-		Author:       "Me",
-		UserName:     "UnnamedXAer",
-		AppName:      "Github Data",
-		ProjectTitle: "FTS2020",
-		Keywords:     k,
+		return
 	}
 
-	err = contact.Render(w, v)
+	v := Data{
+		PageTitle: "Contact",
+		Author:    "Me",
+		UserName:  "UnnamedXAer",
+		AppName:   "Github Data",
+		ViewData:  ir,
+	}
+
+	err = issue.Render(w, v)
 	if err != nil {
 		responseOn500Error(w, err)
+		return
 	}
+
 }
