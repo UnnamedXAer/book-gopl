@@ -1,0 +1,36 @@
+{{define "body"}}
+<div>
+	<article>
+		<h3>{{.Title}}</h1>
+			<section>
+				<table style="font-size: 1.3em;">
+					<tr>
+						<th>Number</th>
+						<td>{{.Number}}</td>
+					</tr>
+					<tr>
+						<th>Title</th>
+						<td>{{.Title}}</td>
+					</tr>
+					<tr>
+						<th>State</th>
+						<td>{{.State}}</td>
+					</tr>
+					<tr>
+						<th>User</th>
+						<td><a href="{{.User.HTMLURL}}" target="_blank"
+								title="{{.User.Login}} GitHub profile page">{{.User.Login}}</a>
+						</td>
+					</tr>
+					<tr>
+						<th>CreatedAt</th>
+						<td>{{.CreatedAt}}</td>
+					</tr>
+				</table>
+				<hr />
+				<h4>Content</h4>
+				<p style="font-size: 1em;">{{.Body}}</p>
+			</section>
+	</article>
+</div>
+{{end}}

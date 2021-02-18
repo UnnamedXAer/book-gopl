@@ -4,15 +4,20 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	htmlTemplate "html/template"
 	"net/http"
 	"net/url"
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/gomarkdown/markdown"
 )
 
 const IssuesByKeywordsURL = "https://api.github.com/search/issues"
 const IssuesByUserRepoURLTplText = "https://api.github.com/repos/{{.Username}}/{{.Reponame}}/issues"
+
+// const IssueByNum = "https://api.github.com/repos/{{.Username}}/{{.Reponame}}/issues{{if .Num}}/{{.Num}}{{end}}"
 
 type issueTime time.Time
 
@@ -35,6 +40,10 @@ func (it *issueTime) MarshalJSON() ([]byte, error) {
 	return []byte(it.String()), nil
 }
 
+func (it *issueTime) Time() time.Time {
+	return time.Time(*it)
+}
+
 type IssuesSearchResults struct {
 	TotalCount int `json:"total_count"`
 	Items      []*Issue
@@ -52,11 +61,13 @@ type IssuesSearchResultsUserRepo struct {
 type Issue struct {
 	Number    int
 	HTMLURL   string `json:"html_url"`
+	URL       string
 	Title     string
 	State     string
 	User      *User
-	CreatedAt issueTime `json:"created_at"`
-	Body      string    // in Markdown format
+	CreatedAt issueTime         `json:"created_at"`
+	Body      htmlTemplate.HTML // in Markdown format
+	NodeID    string            `json:"node_id"`
 }
 
 var (
@@ -92,6 +103,12 @@ func fetchIssuesByKeywords(params []string) (*IssuesSearchResults, error) {
 	}
 	ir.FetchedAt = NewIssueTime()
 	issueCacheWithKeywords[q] = &ir
+
+	for _, v := range ir.Items {
+		b := markdown.ToHTML([]byte(v.Body), nil, nil)
+		v.Body = htmlTemplate.HTML(b)
+	}
+
 	return &ir, nil
 }
 
@@ -139,6 +156,81 @@ func fetchIssuesByUserRepo(un, rn string) (*IssuesSearchResultsUserRepo, error) 
 	ir.RepoName = rn
 	ir.UserName = un
 
+	for _, v := range ir.Items {
+		b := markdown.ToHTML([]byte(v.Body), nil, nil)
+		v.Body = htmlTemplate.HTML(b)
+	}
+
 	issueCacheWithUserRepo[url] = &ir
 	return &ir, nil
+}
+
+func findIssue(list []*Issue, nodeID string) *Issue {
+	for _, item := range list {
+		if item.NodeID == nodeID {
+			return item
+		}
+	}
+	return nil
+}
+
+func getIssue(nodeID string) (*Issue, error) {
+	var cashedIssue interface{}
+
+	for _, v := range issueCacheWithUserRepo {
+		cashedIssue = findIssue(v.Items, nodeID)
+		if cashedIssue != nil {
+			break
+		}
+	}
+	if cashedIssue == nil {
+		for _, v := range issueCacheWithKeywords {
+			cashedIssue = findIssue(v.Items, nodeID)
+			if cashedIssue != nil {
+				break
+			}
+		}
+	}
+
+	if cashedIssue == nil {
+		return nil, fmt.Errorf("not_found")
+	}
+
+	issue, ok := cashedIssue.(*Issue)
+	if ok {
+		t := issue.CreatedAt.Time()
+		if t.After(time.Now().Add(-24 * time.Hour)) {
+			return issue, nil
+		}
+	}
+
+	var err error
+	issue, err = fetchIssue(issue.URL)
+	if err != nil {
+		// we will return the cached issue
+	}
+	return issue, nil
+}
+
+func fetchIssue(url string) (*Issue, error) {
+	res, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	iss := Issue{}
+	if res.StatusCode == 404 {
+		return nil, fmt.Errorf("not_found")
+	}
+
+	err = json.NewDecoder(res.Body).Decode(&iss)
+	if err != nil {
+		return nil, err
+	}
+
+	b := markdown.ToHTML([]byte(iss.Body), nil, nil)
+	iss.Body = htmlTemplate.HTML(b)
+
+	return &iss, nil
 }

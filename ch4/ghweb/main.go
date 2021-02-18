@@ -13,6 +13,7 @@ import (
 var (
 	index      *views.View
 	contact    *views.View
+	issues     *views.View
 	issue      *views.View
 	layoutsDir = "web/layouts"
 	l          *log.Logger
@@ -35,7 +36,8 @@ func main() {
 	// http.HandleFunc("/favicon.ico", faviconHandler)
 	index = views.NewView("bootstrap", "web/views/index.html")
 	contact = views.NewView("bootstrap", "web/views/contact.html")
-	issue = views.NewView("bootstrap", "web/views/issues.html")
+	issues = views.NewView("bootstrap", "web/views/issues.html")
+	issue = views.NewView("bootstrap", "web/views/issue.html")
 
 	staticHandler := http.StripPrefix("/static/", http.FileServer(http.Dir("./static")))
 	http.Handle("/static/", staticHandler)
@@ -43,6 +45,7 @@ func main() {
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/contact", contactHandler)
 	http.HandleFunc("/issues", issuesHandler)
+	http.HandleFunc("/issue", issueHandler)
 
 	http.HandleFunc("/favicon.ico", func(rw http.ResponseWriter, r *http.Request) {
 		l.Println("/favicon.ico", "Referer:", r.Header["Referer"])
@@ -113,10 +116,14 @@ func issuesHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if un != "" && rn != "" {
 		ir, err = fetchIssuesByUserRepo(un, rn)
-	} else {
+	} else if len(r.Form["keywords"]) > 0 {
 		k := r.Form["keywords"]
 		ir, err = fetchIssuesByKeywords(k)
+	} else {
+		http.Error(w, fmt.Sprint("Missing query params"), http.StatusBadRequest)
+		return
 	}
+
 	if err != nil {
 		responseOn500Error(w, err)
 		return
@@ -128,6 +135,46 @@ func issuesHandler(w http.ResponseWriter, r *http.Request) {
 		UserName:  "UnnamedXAer",
 		AppName:   "Github Data",
 		ViewData:  ir,
+	}
+
+	err = issues.Render(w, v)
+	if err != nil {
+		responseOn500Error(w, err)
+		return
+	}
+
+}
+
+func issueHandler(w http.ResponseWriter, r *http.Request) {
+	cnt++
+	fmt.Println(cnt, r.URL.Path)
+
+	ids, ok := r.URL.Query()["id"]
+
+	if ok == false || len(ids) == 0 {
+		http.Error(w, fmt.Sprint("missing the issue node_id ('id=<string>' - query param)"), http.StatusBadRequest)
+		return
+	}
+	nodeID := ids[0]
+
+	var err error
+	if nodeID == "" {
+		http.Error(w, fmt.Sprint("missing the issue node_id value ('id=<string>' - query param)"), http.StatusBadRequest)
+		return
+	}
+	iss, err := getIssue(nodeID)
+
+	if err != nil {
+		responseOn500Error(w, err)
+		return
+	}
+
+	v := Data{
+		PageTitle: "Issue",
+		Author:    "Me",
+		UserName:  "UnnamedXAer",
+		AppName:   "Github Data",
+		ViewData:  iss,
 	}
 
 	err = issue.Render(w, v)
