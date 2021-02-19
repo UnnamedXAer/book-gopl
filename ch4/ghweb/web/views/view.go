@@ -3,7 +3,11 @@ package views
 import (
 	"html/template"
 	"net/http"
+	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/unnamedxaer/book-gopl/ch4/ghweb/viewutil"
 )
 
 var layoutsDir = "web/layouts"
@@ -15,8 +19,9 @@ type View struct {
 }
 
 type ViewData struct {
-	Flashes map[string]string
-	Data    interface{}
+	Flashes    map[string]string
+	RenderTime viewutil.ViewTime
+	Data       interface{}
 }
 
 // NewView parses and returns new view with given layout
@@ -44,7 +49,15 @@ func (v *View) Render(w http.ResponseWriter, data interface{}) error {
 }
 
 func layoutFiles() []string {
-	files, err := filepath.Glob(layoutsDir + "/*.html")
+	var files []string
+	err := filepath.Walk(layoutsDir, func(path string, info os.FileInfo, err error) error {
+		if strings.HasSuffix(path, ".html") {
+			files = append(files, path)
+		}
+		return err
+	})
+
+	// files, err := filepath.Glob(layoutsDir + "/***/*.html")
 	if err != nil {
 		panic(err)
 	}
@@ -56,7 +69,6 @@ func flashes() map[string]string {
 	if flashRotator%3 == 0 {
 		return map[string]string{
 			"warning": "You are about to exceed your plan limits!",
-			"error":   "You are about to exceed your plan limits!",
 		}
 	}
 

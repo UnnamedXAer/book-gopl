@@ -1,41 +1,63 @@
 {{define "body"}}
-<div>
-	<h3>Welcome {{.UserName}}</h3>
+<h1 class="mt-5">Welcome {{.UserName}}</h1>
 
-	<article class="container">
-		<section class="jumbotron">
-			<h4>Find User</h4>
-			<form method="GET" action="/users">
-				<label>User Name: <input name="user-name" /></label>
-				<input type="submit" value="Submit" />
-			</form>
-		</section>
-		<section class="jumbotron">
-			<h4>Find issues</h4>
-			<form method="GET" action="/issues">
-				<label>Search phrase<textarea name="keywords" cols="30" rows="3"
+<article class="container">
+	<section class="jumbotron">
+		<h4>Find User</h4>
+		<form method="GET" action="/users" class="needs-validation" novalidate>
+			<div class="mb-3">
+				</label for="find-user-username-inp">Username:<label>
+					<div class="input-group">
+						<div class="input-group-text">@</div>
+						<input required type="text" class="form-control" id="find-user-username-inp" name="username"
+							placeholder="unnamedxaer">
+					</div>
+			</div>
+			<button type="submit" class="btn btn-primary">Submit</button>
+		</form>
+	</section>
+
+	<section class="jumbotron">
+		<h4>Find issues</h4>
+		<form method="GET" action="/issues" class="needs-validation" novalidate>
+			<div class="mb-3">
+				<label>Search phrase: <textarea required class="form-control" name="keywords" cols="30" rows="3"
 						placeholder="open vscode-go"></textarea>
 				</label>
-				<div>
-					<p>Or by user/repo</p>
+			</div>
+			<button type="submit" class="btn btn-primary">Submit</button>
+		</form>
+		<p>Or by user/repo</p>
+		<form method="GET" action="/issues" class="needs-validation" novalidate>
+			<div class="row">
+				<div class="col">
+					</label for="username-inp">Username:<label>
+						<div class="input-group">
+							<div class="input-group-text">@</div>
+							<input required type="text" class="form-control" id="username-inp" name="username"
+								placeholder="unnamedxaer">
+						</div>
 				</div>
-				<label>Username
-					<input name="username" placeholder="unnamedxaer">
-				</label>
-				<label>Repository name
-					<input name="reponame" placeholder="lang-words">
-				</label>
-				<br />
-				<input type="submit" value="Submit" />
-			</form>
-		</section>
-		<section class="jumbotron">
-			<h4>Print bugs</h4>
-			<form method="GET" action="/bugs">
-				<label>Search keywords <textarea name="keywords" cols="30" rows="3"></textarea></label>
-				<input type="submit" value="Submit" />
-			</form>
-		</section>
-	</article>
-</div>
+				<div class="col">
+					<label for="repositoryname-inp">Repository name:
+					</label>
+					<input required id="repositoryname-inp" name="reponame" placeholder="lang-words"
+						class="form-control">
+				</div>
+			</div>
+			<button type="submit" class="btn btn-primary">Submit</button>
+		</form>
+	</section>
+
+	<section class="jumbotron">
+		<h4>Print bugs</h4>
+		<form method="GET" action="/bugs" class="needs-validation" novalidate>
+			<div class="mb-3">
+				<label>Search keywords <textarea required class="form-control" name="keywords" cols="30"
+						rows="3"></textarea></label>
+			</div>
+			<button type="submit" class="btn btn-primary">Submit</button>
+		</form>
+	</section>
+</article>
 {{end}}

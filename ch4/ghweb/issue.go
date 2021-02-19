@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gomarkdown/markdown"
+	"github.com/unnamedxaer/book-gopl/ch4/ghweb/viewutil"
 )
 
 const IssuesByKeywordsURL = "https://api.github.com/search/issues"
@@ -19,35 +20,10 @@ const IssuesByUserRepoURLTplText = "https://api.github.com/repos/{{.Username}}/{
 
 // const IssueByNum = "https://api.github.com/repos/{{.Username}}/{{.Reponame}}/issues{{if .Num}}/{{.Num}}{{end}}"
 
-type issueTime time.Time
-
-func NewIssueTime() issueTime {
-	return issueTime(time.Now())
-}
-
-func (it issueTime) String() string {
-	return time.Time(it).Format(time.RFC1123)
-}
-
-func (it *issueTime) UnmarshalJSON(b []byte) (err error) {
-	s := strings.Trim(string(b), `"`)
-	t, err := time.Parse("2006-01-02T15:04:05Z", s)
-	*it = issueTime(t)
-	return
-}
-
-func (it *issueTime) MarshalJSON() ([]byte, error) {
-	return []byte(it.String()), nil
-}
-
-func (it *issueTime) Time() time.Time {
-	return time.Time(*it)
-}
-
 type IssuesSearchResults struct {
 	TotalCount int `json:"total_count"`
 	Items      []*Issue
-	FetchedAt  issueTime
+	FetchedAt  viewutil.ViewTime
 }
 
 type IssuesSearchResultsUserRepo struct {
@@ -55,7 +31,7 @@ type IssuesSearchResultsUserRepo struct {
 	RepoName   string
 	UserName   string
 	Items      []*Issue
-	FetchedAt  issueTime
+	FetchedAt  viewutil.ViewTime
 }
 
 type Issue struct {
@@ -65,7 +41,7 @@ type Issue struct {
 	Title     string
 	State     string
 	User      *User
-	CreatedAt issueTime         `json:"created_at"`
+	CreatedAt viewutil.ViewTime `json:"created_at"`
 	Body      htmlTemplate.HTML // in Markdown format
 	NodeID    string            `json:"node_id"`
 }
@@ -101,7 +77,7 @@ func fetchIssuesByKeywords(params []string) (*IssuesSearchResults, error) {
 	if err != nil {
 		return nil, err
 	}
-	ir.FetchedAt = NewIssueTime()
+	ir.FetchedAt = viewutil.NewIssueTime()
 	issueCacheWithKeywords[q] = &ir
 
 	for _, v := range ir.Items {
@@ -151,7 +127,7 @@ func fetchIssuesByUserRepo(un, rn string) (*IssuesSearchResultsUserRepo, error) 
 	if err != nil {
 		return nil, err
 	}
-	ir.FetchedAt = NewIssueTime()
+	ir.FetchedAt = viewutil.NewIssueTime()
 	ir.TotalCount = len(ir.Items)
 	ir.RepoName = rn
 	ir.UserName = un
