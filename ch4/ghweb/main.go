@@ -15,6 +15,7 @@ var (
 	contact    *views.View
 	issues     *views.View
 	issue      *views.View
+	errView    *views.View
 	layoutsDir = "web/layouts"
 	l          *log.Logger
 )
@@ -38,6 +39,7 @@ func main() {
 	contact = views.NewView("bootstrap", "web/views/contact.html")
 	issues = views.NewView("bootstrap", "web/views/issues.html")
 	issue = views.NewView("bootstrap", "web/views/issue.html")
+	errView = views.NewView("bootstrap", "web/views/error.html")
 
 	staticHandler := http.StripPrefix("/static/", http.FileServer(http.Dir("./static")))
 	http.Handle("/static/", staticHandler)
@@ -46,6 +48,7 @@ func main() {
 	http.HandleFunc("/contact", contactHandler)
 	http.HandleFunc("/issues", issuesHandler)
 	http.HandleFunc("/issue", issueHandler)
+	http.HandleFunc("/error", errorHandler)
 
 	http.HandleFunc("/favicon.ico", func(rw http.ResponseWriter, r *http.Request) {
 		l.Println("/favicon.ico", "Referer:", r.Header["Referer"])
@@ -61,7 +64,7 @@ func main() {
 func faviconHandler(w http.ResponseWriter, r *http.Request) {
 	b, err := ioutil.ReadFile("./web/assets/favicon.ico")
 	if err != nil {
-		responseOn500Error(w, err)
+		responseOn500Error(w, r, err)
 		return
 	}
 
@@ -81,7 +84,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := index.Render(w, v)
 	if err != nil {
-		responseOn500Error(w, err)
+		responseOn500Error(w, r, err)
 	}
 }
 
@@ -98,17 +101,13 @@ func contactHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := contact.Render(w, v)
 	if err != nil {
-		responseOn500Error(w, err)
+		responseOn500Error(w, r, err)
 	}
 }
 
 func issuesHandler(w http.ResponseWriter, r *http.Request) {
 	cnt++
 	fmt.Println(cnt, r.URL.Path)
-	// err := r.ParseForm()
-	// if err != nil {
-	// 	responseOn500Error(w, err)
-	// }
 
 	un := r.FormValue("username")
 	rn := r.FormValue("reponame")
@@ -125,7 +124,7 @@ func issuesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		responseOn500Error(w, err)
+		responseOn500Error(w, r, err)
 		return
 	}
 
@@ -139,7 +138,7 @@ func issuesHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = issues.Render(w, v)
 	if err != nil {
-		responseOn500Error(w, err)
+		responseOn500Error(w, r, err)
 		return
 	}
 
@@ -165,7 +164,7 @@ func issueHandler(w http.ResponseWriter, r *http.Request) {
 	iss, err := getIssue(nodeID)
 
 	if err != nil {
-		responseOn500Error(w, err)
+		responseOn500Error(w, r, err)
 		return
 	}
 
@@ -179,8 +178,33 @@ func issueHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = issue.Render(w, v)
 	if err != nil {
-		responseOn500Error(w, err)
+		responseOn500Error(w, r, err)
 		return
 	}
+}
 
+func errorHandler(w http.ResponseWriter, r *http.Request) {
+	cnt++
+	fmt.Println(cnt, r.URL.Path)
+
+	errText := r.URL.Query().Get("t")
+
+	if errText != "" {
+		errText += "\n"
+	}
+	errText = "Please try again later."
+
+	v := Data{
+		PageTitle: "Issue",
+		Author:    "Me",
+		UserName:  "UnnamedXAer",
+		AppName:   "Github Data",
+		ViewData:  errText,
+	}
+
+	err := issue.Render(w, v)
+	if err != nil {
+		responseOn500Error(w, r, err)
+		return
+	}
 }

@@ -65,12 +65,16 @@ func layoutFiles() []string {
 }
 
 func flashes() map[string]string {
-	flashRotator = flashRotator + 1
-	if flashRotator%3 == 0 {
-		return map[string]string{
-			"warning": "You are about to exceed your plan limits!",
-		}
+	return map[string]string{
+		"warning": "You are about to exceed your plan limits!",
 	}
 
-	return map[string]string{}
+	// flashRotator = flashRotator + 1
+	// if flashRotator%3 == 0 {
+	// 	return map[string]string{
+	// 		"warning": "You are about to exceed your plan limits!",
+	// 	}
+	// }
+
+	// return map[string]string{}
 }

@@ -1,26 +1,26 @@
 {{define "body"}}
-
+{{$vd := .ViewData}}
 <div>
-	<h3>Issues {{.TotalCount}}</h3>
-	<p>Fetched at: {{.FetchedAt}}</p>
-	{{if .UserName}}
+	<h3>Issues {{$vd.TotalCount}}</h3>
+	<p>Fetched at: {{$vd.FetchedAt}}</p>
+	{{if $vd.UserName}}
 	<section>
 		<table>
 			<tr>
 				<th>Username</th>
-				<td>{{.UserName}}</td>
+				<td>{{$vd.UserName}}</td>
 			</tr>
 			<tr>
 				<th>Repository</th>
-				<td>{{.RepoName}}</td>
+				<td>{{$vd.RepoName}}</td>
 			</tr>
 		</table>
 	</section>
 	{{end}}
 	<section class="jumbotron">
-		{{if .Items}}
+		{{if $vd.Items}}
 		<ul>
-			{{range .Items}}
+			{{range $vd.Items}}
 			<li>
 				<article>
 					<details>

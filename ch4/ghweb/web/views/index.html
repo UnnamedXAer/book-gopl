@@ -1,46 +1,49 @@
 {{define "body"}}
-<h1 class="mt-5">Welcome {{.UserName}}</h1>
+
+<h1 class="mt-2">Welcome {{.UserName}}</h1>
 
 <article class="container">
-	<section class="jumbotron">
-		<h4>Find User</h4>
+	<section class="card p-3 m-3">
+		<h5 class="card-title">Find User</h5>
 		<form method="GET" action="/users" class="needs-validation" novalidate>
 			<div class="mb-3">
-				</label for="find-user-username-inp">Username:<label>
-					<div class="input-group">
-						<div class="input-group-text">@</div>
-						<input required type="text" class="form-control" id="find-user-username-inp" name="username"
-							placeholder="unnamedxaer">
-					</div>
+				<label for="find-user-username-inp">Username:</label>
+				<div class="input-group">
+					<div class="input-group-text">@</div>
+					<input required type="text" class="form-control" id="find-user-username-inp" name="username"
+						placeholder="unnamedxaer">
+				</div>
 			</div>
 			<button type="submit" class="btn btn-primary">Submit</button>
 		</form>
 	</section>
 
-	<section class="jumbotron">
-		<h4>Find issues</h4>
+	<section class="card p-3 m-3">
+		<h5 class="card-title">Find issues by phrase</h5>
 		<form method="GET" action="/issues" class="needs-validation" novalidate>
 			<div class="mb-3">
-				<label>Search phrase: <textarea required class="form-control" name="keywords" cols="30" rows="3"
-						placeholder="open vscode-go"></textarea>
-				</label>
+				<label for="find-issue-keywords-inp">Search phrase:</label>
+				<textarea id="find-issue-keywords-inp" required class="form-control" name="keywords" cols="30" rows="3"
+					placeholder="open vscode-go"></textarea>
 			</div>
 			<button type="submit" class="btn btn-primary">Submit</button>
 		</form>
-		<p>Or by user/repo</p>
+	</section>
+
+	<section class="card p-3 m-3">
+		<h5 class="card-title">Find issues by user / repo names</h5>
 		<form method="GET" action="/issues" class="needs-validation" novalidate>
-			<div class="row">
+			<div class="row mb-3">
 				<div class="col">
-					</label for="username-inp">Username:<label>
-						<div class="input-group">
-							<div class="input-group-text">@</div>
-							<input required type="text" class="form-control" id="username-inp" name="username"
-								placeholder="unnamedxaer">
-						</div>
+					<label for="username-inp">Username:</label>
+					<div class="input-group">
+						<div class="input-group-text">@</div>
+						<input required type="text" class="form-control" id="username-inp" name="username"
+							placeholder="unnamedxaer">
+					</div>
 				</div>
 				<div class="col">
-					<label for="repositoryname-inp">Repository name:
-					</label>
+					<label for="repositoryname-inp">Repository name:</label>
 					<input required id="repositoryname-inp" name="reponame" placeholder="lang-words"
 						class="form-control">
 				</div>
@@ -49,12 +52,13 @@
 		</form>
 	</section>
 
-	<section class="jumbotron">
-		<h4>Print bugs</h4>
+	<section class="card p-3 m-3">
+		<h5 class="card-title">Print bugs</h5>
 		<form method="GET" action="/bugs" class="needs-validation" novalidate>
 			<div class="mb-3">
-				<label>Search keywords <textarea required class="form-control" name="keywords" cols="30"
-						rows="3"></textarea></label>
+				<label for="find-bugs-keywords-inp">Search keywords:</label>
+				<textarea id="find-bugs-keywords-inp" required class="form-control" name="keywords" cols="30"
+					rows="3"></textarea>
 			</div>
 			<button type="submit" class="btn btn-primary">Submit</button>
 		</form>
