@@ -1,0 +1,11 @@
+main > .container {
+	padding: 60px 15px 0;
+} 
+
+form .server-error {
+	display: block;
+}
+
+form.was-validated .server-error {
+	display: none;
+}
