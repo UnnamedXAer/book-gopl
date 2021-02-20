@@ -1,0 +1,22 @@
+{{define "body"}}
+{{$vd := .ViewData}}
+<article class="container">
+	<h3>Total Results Count: {{$vd.TotalCount}}</h3>
+	<p>Fetched at: {{$vd.FetchedAt}}</p>
+	{{with $vd.Items}}
+	{{range $i, $v := .}}
+	<section class="card p-3 m-3">
+		<div class="card-body">
+			<h5 class="card-title">{{$v.Login}}</h5>
+			<p class="card-text">
+				Type: {{$v.Type}}<br />
+				NodeID: {{$v.NodeID}}
+			</p>
+			<p style="float: right;">{{addOne $i}}</p>
+		</div>
+	</section>
+	{{end}}
+	{{end}}
+</article>
+
+{{end}}

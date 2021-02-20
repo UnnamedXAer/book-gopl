@@ -1,23 +1,26 @@
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
+	"github.com/unnamedxaer/book-gopl/ch4/ghweb/config"
 	"github.com/unnamedxaer/book-gopl/ch4/ghweb/web/views"
 )
 
 var (
-	index      *views.View
-	contact    *views.View
-	issues     *views.View
-	issue      *views.View
-	errView    *views.View
-	layoutsDir = "web/layouts"
-	l          *log.Logger
+	index          *views.View
+	contact        *views.View
+	issues         *views.View
+	issue          *views.View
+	searchUserView *views.View
+	usersView      *views.View
+	errView        *views.View
+	layoutsDir     = "web/layouts"
+	l              *log.Logger
 )
 
 var cnt int
@@ -31,15 +34,24 @@ type Data struct {
 	ViewData  interface{}
 }
 
+func init() {
+
+}
+
 func main() {
 	l = log.New(os.Stdout, "> ", log.LstdFlags)
 
 	// http.HandleFunc("/favicon.ico", faviconHandler)
-	index = views.NewView("bootstrap", "web/views/index.html")
-	contact = views.NewView("bootstrap", "web/views/contact.html")
-	issues = views.NewView("bootstrap", "web/views/issues.html")
-	issue = views.NewView("bootstrap", "web/views/issue.html")
-	errView = views.NewView("bootstrap", "web/views/error.html")
+	index = views.NewView("bootstrap", nil, "web/views/index.html")
+	contact = views.NewView("bootstrap", nil, "web/views/contact.html")
+	issues = views.NewView("bootstrap", nil, "web/views/issues.html")
+	issue = views.NewView("bootstrap", nil, "web/views/issue.html")
+	searchUserView = views.NewView("bootstrap", nil, "web/views/users-search.html")
+	funcs := template.FuncMap{
+		"addOne": func(x int) int { return x + 1 },
+	}
+	usersView = views.NewView("bootstrap", funcs, "web/views/users.html")
+	errView = views.NewView("bootstrap", nil, "web/views/error.html")
 
 	staticHandler := http.StripPrefix("/static/", http.FileServer(http.Dir("./static")))
 	http.Handle("/static/", staticHandler)
@@ -47,7 +59,10 @@ func main() {
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/contact", contactHandler)
 	http.HandleFunc("/issues", issuesHandler)
-	http.HandleFunc("/issue", issueHandler)
+	// http.HandleFunc("/issue", issueHandler)
+	http.Handle("/issue", appHandler(issueHandler))
+	http.Handle("/search-user", appHandler(userSearchHandler))
+	http.Handle("/users", appHandler(userSearchResultsHandler))
 	http.HandleFunc("/error", errorHandler)
 
 	http.HandleFunc("/favicon.ico", func(rw http.ResponseWriter, r *http.Request) {
@@ -56,155 +71,7 @@ func main() {
 		rw.Write([]byte{})
 	})
 
-	l.Println("Server available on http://localhost:3030")
-	err := http.ListenAndServe(":3030", nil)
+	l.Println("Server available on http://localhost:" + strconv.Itoa(int(config.C.PORT)))
+	err := http.ListenAndServe(":"+strconv.Itoa(int(config.C.PORT)), nil)
 	checkErr(err)
-}
-
-func faviconHandler(w http.ResponseWriter, r *http.Request) {
-	b, err := ioutil.ReadFile("./web/assets/favicon.ico")
-	if err != nil {
-		responseOn500Error(w, r, err)
-		return
-	}
-
-	fmt.Fprint(w, b)
-}
-
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	cnt++
-	fmt.Println(cnt, "/", r.URL.Path)
-
-	v := Data{
-		PageTitle: "Home",
-		Author:    "Me",
-		UserName:  "UnnamedXAer",
-		AppName:   "Github Data",
-	}
-
-	err := index.Render(w, v)
-	if err != nil {
-		responseOn500Error(w, r, err)
-	}
-}
-
-func contactHandler(w http.ResponseWriter, r *http.Request) {
-	cnt++
-	fmt.Println(cnt, r.URL.Path)
-
-	v := Data{
-		PageTitle: "Contact",
-		Author:    "Me",
-		UserName:  "UnnamedXAer",
-		AppName:   "Github Data",
-	}
-
-	err := contact.Render(w, v)
-	if err != nil {
-		responseOn500Error(w, r, err)
-	}
-}
-
-func issuesHandler(w http.ResponseWriter, r *http.Request) {
-	cnt++
-	fmt.Println(cnt, r.URL.Path)
-
-	un := r.FormValue("username")
-	rn := r.FormValue("reponame")
-	var ir interface{}
-	var err error
-	if un != "" && rn != "" {
-		ir, err = fetchIssuesByUserRepo(un, rn)
-	} else if len(r.Form["keywords"]) > 0 {
-		k := r.Form["keywords"]
-		ir, err = fetchIssuesByKeywords(k)
-	} else {
-		http.Error(w, fmt.Sprint("Missing query params"), http.StatusBadRequest)
-		return
-	}
-
-	if err != nil {
-		responseOn500Error(w, r, err)
-		return
-	}
-
-	v := Data{
-		PageTitle: "Contact",
-		Author:    "Me",
-		UserName:  "UnnamedXAer",
-		AppName:   "Github Data",
-		ViewData:  ir,
-	}
-
-	err = issues.Render(w, v)
-	if err != nil {
-		responseOn500Error(w, r, err)
-		return
-	}
-
-}
-
-func issueHandler(w http.ResponseWriter, r *http.Request) {
-	cnt++
-	fmt.Println(cnt, r.URL.Path)
-
-	ids, ok := r.URL.Query()["id"]
-
-	if ok == false || len(ids) == 0 {
-		http.Error(w, fmt.Sprint("missing the issue node_id ('id=<string>' - query param)"), http.StatusBadRequest)
-		return
-	}
-	nodeID := ids[0]
-
-	var err error
-	if nodeID == "" {
-		http.Error(w, fmt.Sprint("missing the issue node_id value ('id=<string>' - query param)"), http.StatusBadRequest)
-		return
-	}
-	iss, err := getIssue(nodeID)
-
-	if err != nil {
-		responseOn500Error(w, r, err)
-		return
-	}
-
-	v := Data{
-		PageTitle: "Issue",
-		Author:    "Me",
-		UserName:  "UnnamedXAer",
-		AppName:   "Github Data",
-		ViewData:  iss,
-	}
-
-	err = issue.Render(w, v)
-	if err != nil {
-		responseOn500Error(w, r, err)
-		return
-	}
-}
-
-func errorHandler(w http.ResponseWriter, r *http.Request) {
-	cnt++
-	fmt.Println(cnt, r.URL.Path)
-
-	errText := r.URL.Query().Get("t")
-
-	if errText != "" {
-		errText += "\n"
-	}
-	errText = "Please try again later."
-
-	v := Data{
-		PageTitle: "Issue",
-		Author:    "Me",
-		UserName:  "UnnamedXAer",
-		AppName:   "Github Data",
-		ViewData:  errText,
-	}
-
-	err := issue.Render(w, v)
-	if err != nil {
-		responseOn500Error(w, r, err)
-		return
-	}
 }

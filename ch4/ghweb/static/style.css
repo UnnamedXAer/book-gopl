@@ -1,18 +1,11 @@
-/* html,
-body {
-	width: 100vw;
-	min-height: 100vh;
-}
-
-body {
-	position: relative;
-	padding-bottom: 60px;
-}
-
-/* Custom page CSS
--------------------------------------------------- */
-/* Not required for template or sticky footer method. */
-
 main > .container {
 	padding: 60px 15px 0;
 } 
+
+form .server-error {
+	display: block;
+}
+
+form.was-validated .server-error {
+	display: none;
+}

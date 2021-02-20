@@ -2,6 +2,7 @@ package views
 
 import (
 	"html/template"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -25,9 +26,9 @@ type ViewData struct {
 }
 
 // NewView parses and returns new view with given layout
-func NewView(layout string, files ...string) *View {
+func NewView(layout string, funcs template.FuncMap, files ...string) *View {
 	files = append(layoutFiles(), files...)
-	t, err := template.ParseFiles(files...)
+	t, err := template.New("").Funcs(funcs).ParseFiles(files...)
 	if err != nil {
 		panic(err)
 	}
@@ -37,7 +38,7 @@ func NewView(layout string, files ...string) *View {
 	}
 }
 
-// Render sends view data to user
+// Render sends view data to user. Render is deprecated, use Execute instead
 func (v *View) Render(w http.ResponseWriter, data interface{}) error {
 
 	vd := ViewData{
@@ -45,6 +46,26 @@ func (v *View) Render(w http.ResponseWriter, data interface{}) error {
 		Data:    data,
 	}
 
+	return v.Template.ExecuteTemplate(w, v.Layout, vd)
+}
+
+// Execute executes template and write it's results to w
+//
+//  b := &bytes.Buffer{}
+//  err = issue.Execute(b, v)
+//  if err != nil {
+// 		return newAppError(
+// 			err,
+// 			"Sorry, because of some errors we couldn't print your page.",
+// 			http.StatusInternalServerError)
+// 	}
+// 	fmt.Fprint(w, b)
+func (v *View) Execute(w io.Writer, data interface{}) error {
+
+	vd := ViewData{
+		Flashes: flashes(),
+		Data:    data,
+	}
 	return v.Template.ExecuteTemplate(w, v.Layout, vd)
 }
 
@@ -57,7 +78,6 @@ func layoutFiles() []string {
 		return err
 	})
 
-	// files, err := filepath.Glob(layoutsDir + "/***/*.html")
 	if err != nil {
 		panic(err)
 	}
@@ -65,16 +85,16 @@ func layoutFiles() []string {
 }
 
 func flashes() map[string]string {
-	return map[string]string{
-		"warning": "You are about to exceed your plan limits!",
-	}
-
-	// flashRotator = flashRotator + 1
-	// if flashRotator%3 == 0 {
-	// 	return map[string]string{
-	// 		"warning": "You are about to exceed your plan limits!",
-	// 	}
+	// return map[string]string{
+	// 	"warning": "You are about to exceed your plan limits!",
 	// }
 
-	// return map[string]string{}
+	flashRotator = flashRotator + 1
+	if flashRotator%3 == 0 {
+		return map[string]string{
+			"warning": "You are about to exceed your plan limits!",
+		}
+	}
+
+	return map[string]string{}
 }

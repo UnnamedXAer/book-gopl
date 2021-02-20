@@ -1,0 +1,35 @@
+{{define "body"}}
+{{$vd := .ViewData}}
+<article class="container">
+	<section class="card p-3 m-3">
+		<h5 class="card-title">Find User or Organisation</h5>
+		<form method="GET" action="/users" class="needs-validation" novalidate>
+			<div class="mb-3">
+				<label class="form-label" for="name-inp">Name:</label>
+				<div class="input-group has-validation">
+					<div class="input-group-text">@</div>
+					<input required type="text" class="form-control" id="name-inp" name="n" placeholder="unnamedxaer"
+						aria-describedby="inputGroupPrepend">
+					<div class="invalid-feedback">
+						Name is required.
+					</div>
+					{{with $vd.errors.name}}
+					<div class="server-error invalid-feedback">
+						{{ . }}
+					</div>
+					{{end}}
+				</div>
+			</div>
+			<button type="submit" class="btn btn-primary">Submit</button>
+
+			{{if $vd.errors.requestErr}}
+			<div class="alert alert-danger" role="alert">
+				{{$vd.errors.requestErr}}
+			</div>
+			{{end}}
+		</form>
+	</section>
+</article>
+<script src="/static/applyFormValidation.js"></script>
+
+{{end}}

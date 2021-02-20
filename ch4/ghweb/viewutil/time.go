@@ -7,7 +7,7 @@ import (
 
 type ViewTime time.Time
 
-func NewIssueTime() ViewTime {
+func NewTime() ViewTime {
 	return ViewTime(time.Now())
 }
 

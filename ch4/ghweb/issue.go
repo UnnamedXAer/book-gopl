@@ -77,7 +77,7 @@ func fetchIssuesByKeywords(params []string) (*IssuesSearchResults, error) {
 	if err != nil {
 		return nil, err
 	}
-	ir.FetchedAt = viewutil.NewIssueTime()
+	ir.FetchedAt = viewutil.NewTime()
 	issueCacheWithKeywords[q] = &ir
 
 	for _, v := range ir.Items {
@@ -127,7 +127,7 @@ func fetchIssuesByUserRepo(un, rn string) (*IssuesSearchResultsUserRepo, error) 
 	if err != nil {
 		return nil, err
 	}
-	ir.FetchedAt = viewutil.NewIssueTime()
+	ir.FetchedAt = viewutil.NewTime()
 	ir.TotalCount = len(ir.Items)
 	ir.RepoName = rn
 	ir.UserName = un

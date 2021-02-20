@@ -1,14 +1,9 @@
 {{define "body"}}
 
-<h1 class="mt-2">Welcome {{.UserName}}</h1>
-
-<article class="container">
-	<section class="card text-white bg-danger mb-3" style="max-width: 18rem;">
-		<div class="card-header">Error</div>
-		<div class="card-body">
-			<h5 class="card-title">Ooops, something was over calculated 🤯</h5>
-			<p class="card-text">.ViewData</p>
-		</div>
+<article class="container-fluid bg-danger text-white p-3 m-2 border rounded">
+	<h4 class="w-100">Ooops, something was over calculated 🤯</h3>
+		<div class="w-100">
+			<p class="text-break fs-3 text">{{.ViewData}}</p>
 		</div>
 </article>
 {{end}}
