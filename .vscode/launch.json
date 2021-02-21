@@ -11,7 +11,8 @@
 			"mode": "debug",
 			"program": "${file}",
 			"args": [
-				"<","doc.html"
+				"https://developer.mozilla.org/en-US/docs/Learn/HTML/Multimedia_and_embedding/Responsive_images",
+				"https://pkg.go.dev/golang.org/x/net/html#example-Parse",
 			],
 		},
 		{
