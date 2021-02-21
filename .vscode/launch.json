@@ -10,7 +10,9 @@
 			"request": "launch",
 			"mode": "debug",
 			"program": "${file}",
-			"args": [],
+			"args": [
+				"<","doc.html"
+			],
 		},
 		{
 			"name": "Launch Package",
