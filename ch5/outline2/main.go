@@ -9,9 +9,9 @@ import (
 	"golang.org/x/net/html"
 )
 
-var depth int
+// var depth int
 
-const outputFileName = "r.html"
+const outputFileName = "r2.html"
 
 func main() {
 
@@ -25,27 +25,48 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	// err = os.Remove(outputFileName)
-	// if err != nil {
-	// 	log.Printf("couldn't remove file: %q, err: %v", outputFileName, err)
-	// }
-
 	of, err := os.OpenFile(outputFileName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
 		panic(err)
 	}
 	defer of.Close()
-	// err = of.Truncate(0)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// _, err = of.Seek(0, 0)
-	// if err != nil {
-	// 	panic(err)
-	// }
+
+	var depth int
+
+	startElement := func(n *html.Node) (s string) {
+		if n.Type == html.ElementNode {
+			s = fmt.Sprintf("%*s<%s", depth*2, "", n.Data)
+			for _, v := range n.Attr {
+				s += fmt.Sprintf(` %s="%s"`, v.Key, v.Val)
+			}
+
+			if n.FirstChild == nil && (n.Data == "img") {
+				s += " /"
+			}
+			s += ">\n"
+			depth++
+		} else if n.Type == html.TextNode {
+			t := strings.ReplaceAll(strings.ReplaceAll(n.Data, "\t", ""), "\n", " ")
+			if t != "" {
+				s += fmt.Sprintf("%*s%s\n", depth*2, "", t)
+			}
+		}
+		return
+	}
+
+	endElement := func(n *html.Node) string {
+		if n.Type == html.ElementNode {
+			depth--
+			if n.Data != "img" {
+				return fmt.Sprintf("%*s</%s>\n", depth*2, "", n.Data)
+			}
+		}
+		return ""
+	}
 
 	s := forEachNode(doc, startElement, endElement)
 
+	fmt.Println(s)
 	n, err := of.WriteString(s)
 	if err != nil {
 		log.Println("write error: ", err)
@@ -69,33 +90,33 @@ func forEachNode(n *html.Node, pre, post func(n *html.Node) string) string {
 	return s
 }
 
-func startElement(n *html.Node) (s string) {
-	if n.Type == html.ElementNode {
-		s = fmt.Sprintf("%*s<%s", depth*2, "", n.Data)
-		for _, v := range n.Attr {
-			s += fmt.Sprintf(` %s="%s"`, v.Key, v.Val)
-		}
+// func startElement(n *html.Node) (s string) {
+// 	if n.Type == html.ElementNode {
+// 		s = fmt.Sprintf("%*s<%s", depth*2, "", n.Data)
+// 		for _, v := range n.Attr {
+// 			s += fmt.Sprintf(` %s="%s"`, v.Key, v.Val)
+// 		}
 
-		if n.FirstChild == nil && (n.Data == "img") {
-			s += " /"
-		}
-		s += ">\n"
-		depth++
-	} else if n.Type == html.TextNode {
-		t := strings.ReplaceAll(strings.ReplaceAll(n.Data, "\t", ""), "\n", " ")
-		if t != "" {
-			s += fmt.Sprintf("%*s%s\n", depth*2, "", t)
-		}
-	}
-	return
-}
+// 		if n.FirstChild == nil && (n.Data == "img") {
+// 			s += " /"
+// 		}
+// 		s += ">\n"
+// 		depth++
+// 	} else if n.Type == html.TextNode {
+// 		t := strings.ReplaceAll(strings.ReplaceAll(n.Data, "\t", ""), "\n", " ")
+// 		if t != "" {
+// 			s += fmt.Sprintf("%*s%s\n", depth*2, "", t)
+// 		}
+// 	}
+// 	return
+// }
 
-func endElement(n *html.Node) string {
-	if n.Type == html.ElementNode {
-		depth--
-		if n.Data != "img" {
-			return fmt.Sprintf("%*s</%s>\n", depth*2, "", n.Data)
-		}
-	}
-	return ""
-}
+// func endElement(n *html.Node) string {
+// 	if n.Type == html.ElementNode {
+// 		depth--
+// 		if n.Data != "img" {
+// 			return fmt.Sprintf("%*s</%s>\n", depth*2, "", n.Data)
+// 		}
+// 	}
+// 	return ""
+// }
