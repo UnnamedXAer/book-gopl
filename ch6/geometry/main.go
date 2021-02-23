@@ -1,11 +1,14 @@
 package geometry
 
 import (
+	"image/color"
 	"math"
 )
 
+// Point represents point in two dimensional space
 type Point struct {
-	X, Y float64
+	X float64
+	Y float64
 }
 
 // Distance returns distance between p and q points
@@ -25,6 +28,9 @@ func (p *Point) ScaleBy(factor float64) {
 	p.Y *= factor
 }
 
+func (p Point) Add(q Point) Point { return Point{p.X + q.X, p.Y + q.Y} }
+func (p Point) Sub(q Point) Point { return Point{p.X - q.X, p.Y - q.Y} }
+
 // Path is a journey connecting the points with straight lines.
 type Path []Point
 
@@ -42,6 +48,27 @@ func (path Path) Distance() float64 {
 		d += path[i].Distance(path[i+1])
 	}
 	return d
+}
+
+func (path Path) TranslateBy(offset Point, add bool) {
+	var op func(p, q Point) Point
+	if add {
+		op = Point.Add
+	} else {
+		op = Point.Sub
+	}
+
+	for i := range path {
+		// call either path[i].Add(offser) or path[i].Sub(offset)
+		path[i] = op(path[i], offset)
+	}
+}
+
+// ColoredPoint represents point in two dimensional space
+// with additional color value
+type ColoredPoint struct {
+	Point
+	Color color.RGBA
 }
 
 // func main() {

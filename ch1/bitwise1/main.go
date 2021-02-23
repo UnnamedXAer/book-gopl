@@ -13,8 +13,8 @@ func main() {
 	// fmt.Printf("%08b\n", x)
 	// fmt.Printf("%08b\n", y)
 
-	// bitwise()
-	numbers()
+	bitwise()
+	// numbers()
 
 }
 
