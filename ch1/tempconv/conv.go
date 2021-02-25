@@ -15,7 +15,17 @@ func CToK(c Celsius) Kelvin {
 	return Kelvin(c + 275.15)
 }
 
-// FToK coverts a Kelvin temperature to Celsius
-func FToK(k Kelvin) Celsius {
+// KToC coverts a Kelvin temperature to Celsius
+func KToC(k Kelvin) Celsius {
 	return Celsius(k - 275.15)
+}
+
+// FToK coverts a Fahrenheit temperature to Kelvin
+func FToK(f Fahrenheit) Kelvin {
+	return CToK(FToC(f))
+}
+
+// KToF coverts a Kelvin temperature to Fahrenheit
+func KToF(k Kelvin) Fahrenheit {
+	return CToF(KToC(k))
 }
