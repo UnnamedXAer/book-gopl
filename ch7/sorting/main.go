@@ -62,15 +62,18 @@ func printTracks(tracks []*Track, w io.Writer) {
 
 func printTracksHTML(w http.ResponseWriter, tracks []*Track, fieldsOrder []string, order string) {
 	headers := []string{"Title", "Artist", "Album", "Year", "Length"}
-	var field string
-	if order == "desc" {
-		field = fieldsOrder[0]
+
+	if order == "" || order == "asc" {
+		order = "desc"
+	} else {
+		order = "asc"
 	}
 
 	data := map[string]interface{}{
 		"Headers":      headers,
 		"Tracks":       tracks,
-		"OrderedField": field,
+		"OrderedField": fieldsOrder[0],
+		"Order":        order,
 	}
 
 	b := new(bytes.Buffer)
@@ -98,11 +101,9 @@ func tracksHandler(w http.ResponseWriter, r *http.Request) {
 
 	if field != "" {
 		sortableTracks.SetSortBy(field, order)
-		// rev := sort.Reverse(sortableTracks)
-		// sort.Sort(rev)
 		sort.Sort(sortableTracks)
 	}
-	order, fieldsOrder := sortableTracks.GetOrder()
+	_, fieldsOrder := sortableTracks.GetOrder()
 	printTracksHTML(w, tracks, fieldsOrder, order)
 }
 
@@ -110,33 +111,33 @@ func faviconHandler(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func main1() {
-	printTracks(tracks, os.Stdout)
-	fmt.Println(sort.IsSorted(byArtist(tracks)))
-	sort.Sort(byArtist(tracks))
-	fmt.Println(sort.IsSorted(byArtist(tracks)))
-	sort.Sort(customSort{tracks, func(x, y *Track) bool {
-		if x.Title != y.Title {
-			return x.Title < y.Title
-		}
-		if x.Year != y.Year {
-			return x.Year < y.Year
-		}
-		if x.Length != y.Length {
-			return x.Length < y.Length
-		}
-		return false
-	}})
-	printTracks(tracks, os.Stdout)
-	ss := NewStatefulSort(tracks, nil)
-	fmt.Println()
-	sort.Sort(ss)
-	printTracks(tracks, os.Stdout)
+// func main1() {
+// 	printTracks(tracks, os.Stdout)
+// 	fmt.Println(sort.IsSorted(byArtist(tracks)))
+// 	sort.Sort(byArtist(tracks))
+// 	fmt.Println(sort.IsSorted(byArtist(tracks)))
+// 	sort.Sort(customSort{tracks, func(x, y *Track) bool {
+// 		if x.Title != y.Title {
+// 			return x.Title < y.Title
+// 		}
+// 		if x.Year != y.Year {
+// 			return x.Year < y.Year
+// 		}
+// 		if x.Length != y.Length {
+// 			return x.Length < y.Length
+// 		}
+// 		return false
+// 	}})
+// 	printTracks(tracks, os.Stdout)
+// 	ss := NewStatefulSort(tracks, nil)
+// 	fmt.Println()
+// 	sort.Sort(ss)
+// 	printTracks(tracks, os.Stdout)
 
-	for _, field := range os.Args[1:] {
-		fmt.Println()
-		ss.SetSortBy(field, "")
-		sort.Sort(ss)
-		printTracks(tracks, os.Stdout)
-	}
-}
+// 	for _, field := range os.Args[1:] {
+// 		fmt.Println()
+// 		ss.SetSortBy(field, "")
+// 		sort.Sort(ss)
+// 		printTracks(tracks, os.Stdout)
+// 	}
+// }

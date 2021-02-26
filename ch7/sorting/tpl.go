@@ -35,11 +35,18 @@ func init() {
 	htmlTpl.New("header").Parse(`
 	{{$headers := .Headers}}
 	{{$ordered := .OrderedField}}
+	{{$order := .Order}}
 	<tr>
 	{{range $headers}}
 		<th>
-			<a href="/?field={{.}}{{if eq $ordered .}}&order=desc{{end}}" 
-				title="Sort by {{.}}{{if eq $ordered .}} descending.{{end}}">{{.}}</a>
+		{{if eq $ordered . -}}
+			<a href="/?field={{.}}&order={{$order}}" 
+				title="Sort by {{.}}{{$order}}ending.">{{.}}
+				{{if eq $order "asc"}}&#x1F815;{{else}}&#x1F807;{{end}}</a>
+
+		{{else}}
+			<a href="/?field={{.}}" title="Sort by {{.}}">{{.}}</a>
+		{{- end}}
 		</th>
 	{{end}}
 	</tr>`)

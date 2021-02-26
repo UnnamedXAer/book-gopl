@@ -24,8 +24,12 @@ func (x customSort) Less(i, j int) bool { return x.less(x.t[i], x.t[j]) }
 func (x customSort) Swap(i, j int)      { x.t[i], x.t[j] = x.t[j], x.t[i] }
 
 type StatefulSort struct {
-	t           []*Track
-	order       string
+	t     []*Track
+	order string
+	// @thought: its not the correct way of doing for http use because it shares the state
+	// @thought: across all clients therefore all of the clients will get the same order
+	// @thought: and override others order if decide to reorder on their page,
+	// @thought: but can be use to simple CLI program.
 	fieldsOrder []string
 	reverse     bool
 }
@@ -103,39 +107,8 @@ func (x StatefulSort) Less(i, j int) bool {
 }
 func (x StatefulSort) Swap(i, j int) { x.t[i], x.t[j] = x.t[j], x.t[i] }
 
-func lessOld(x, y *Track, order []string) bool {
-	for i := 0; i < len(order)-1; i++ {
-		switch order[i] {
-		case "Title":
-			if x.Title != y.Title {
-				return x.Title < y.Title
-			}
-		case "Artist":
-			if x.Artist != y.Artist {
-				return x.Artist < y.Artist
-			}
-		case "Album":
-			if x.Album != y.Album {
-				return x.Album < y.Album
-			}
-		case "Year":
-			if x.Year != y.Year {
-				return x.Year < y.Year
-			}
-		case "Length":
-			if x.Length != y.Length {
-				return x.Length < y.Length
-			}
-		default:
-			return false
-		}
-	}
-	return false
-}
-
 func less(x, y *Track, fieldsOrder []string, order string) bool {
 	var i int
-	order = "asc"
 	if order == "desc" {
 		l, ok := lessField(y, x, fieldsOrder[i])
 		if ok {
