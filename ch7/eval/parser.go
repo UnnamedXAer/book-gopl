@@ -38,9 +38,11 @@ func (lex *lexer) describe() string {
 
 func precedence(op rune) int {
 	switch op {
+	case '<', '>':
+		return 3
 	case '*', '/':
 		return 2
-	case '+', '-':
+	case '+', '-', '!':
 		return 1
 	}
 	return 0
@@ -104,7 +106,13 @@ func parseUnary(lex *lexer) Expr {
 		lex.next() // consume '+' or '-'
 		return unary{op, parseUnary(lex)}
 	}
-	return parsePrimary(lex)
+	primary := parsePrimary(lex)
+	if lex.token == '!' {
+		op := lex.token
+		lex.next() // consume '+' or '-'
+		return postUnary{op, primary}
+	}
+	return primary
 }
 
 // primary = id

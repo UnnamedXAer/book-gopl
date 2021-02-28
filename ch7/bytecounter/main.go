@@ -1,13 +1,9 @@
-package main
+package bytecounter
 
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
-	"io/ioutil"
-	"log"
-	"os"
 )
 
 type ByteCounter int
@@ -68,66 +64,66 @@ func CountingWriter(w io.Writer) (io.Writer, *int64) {
 	return &xw, &xw.n
 }
 
-func main() {
+// func main() {
 
-	f, err := os.Open("main.go")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer f.Close()
-	b, err := ioutil.ReadAll(f)
-	if err != nil {
-		log.Fatalln(err)
-	}
+// 	f, err := os.Open("main.go")
+// 	if err != nil {
+// 		log.Fatalln(err)
+// 	}
+// 	defer f.Close()
+// 	b, err := ioutil.ReadAll(f)
+// 	if err != nil {
+// 		log.Fatalln(err)
+// 	}
 
-	s := string(b)
+// 	s := string(b)
 
-	// var c ByteCounter
+// 	// var c ByteCounter
 
-	// n, err := fmt.Fprintln(&c, s)
-	// if err != nil {
-	// 	fmt.Fprintf(os.Stderr, "fail while writing, written bytes %d, error: %v", n, err)
-	// }
-	// fmt.Println("n", n)
-	// fmt.Println("c", c)
-	// fmt.Println()
+// 	// n, err := fmt.Fprintln(&c, s)
+// 	// if err != nil {
+// 	// 	fmt.Fprintf(os.Stderr, "fail while writing, written bytes %d, error: %v", n, err)
+// 	// }
+// 	// fmt.Println("n", n)
+// 	// fmt.Println("c", c)
+// 	// fmt.Println()
 
-	// var lc LineCounter
+// 	// var lc LineCounter
 
-	// n, err = fmt.Fprintln(&lc, s)
-	// if err != nil {
-	// 	fmt.Fprintf(os.Stderr, "fail while writing, written lines %d, error: %v", n, err)
-	// }
-	// fmt.Println("n", n)
-	// fmt.Println("lc", lc)
+// 	// n, err = fmt.Fprintln(&lc, s)
+// 	// if err != nil {
+// 	// 	fmt.Fprintf(os.Stderr, "fail while writing, written lines %d, error: %v", n, err)
+// 	// }
+// 	// fmt.Println("n", n)
+// 	// fmt.Println("lc", lc)
 
-	// var wc WordCounter
+// 	// var wc WordCounter
 
-	// n, err = fmt.Fprintln(&wc, s)
-	// if err != nil {
-	// 	fmt.Fprintf(os.Stderr, "fail while writing, written words %d, error: %v", n, err)
-	// }
-	// fmt.Println("n", n)
-	// fmt.Println("wc", wc)
-	var c ByteCounter
-	var tmpn int
-	xw, n := CountingWriter(&c)
+// 	// n, err = fmt.Fprintln(&wc, s)
+// 	// if err != nil {
+// 	// 	fmt.Fprintf(os.Stderr, "fail while writing, written words %d, error: %v", n, err)
+// 	// }
+// 	// fmt.Println("n", n)
+// 	// fmt.Println("wc", wc)
+// 	var c ByteCounter
+// 	var tmpn int
+// 	xw, n := CountingWriter(&c)
 
-	fmt.Println()
-	fmt.Println("*n", *n)
-	tmpn, err = xw.Write([]byte(s))
-	if err != nil {
-		log.Fatalln(err)
-	}
-	fmt.Println()
-	fmt.Println("*n", *n)
-	fmt.Println("tmpn", tmpn)
-	tmpn, err = xw.Write([]byte(s))
-	if err != nil {
-		log.Fatalln(err)
-	}
-	fmt.Println()
-	fmt.Println("*n", *n)
-	fmt.Println("tmpn", tmpn)
-	fmt.Println("xw.n", xw.(*XWriter).N())
-}
+// 	fmt.Println()
+// 	fmt.Println("*n", *n)
+// 	tmpn, err = xw.Write([]byte(s))
+// 	if err != nil {
+// 		log.Fatalln(err)
+// 	}
+// 	fmt.Println()
+// 	fmt.Println("*n", *n)
+// 	fmt.Println("tmpn", tmpn)
+// 	tmpn, err = xw.Write([]byte(s))
+// 	if err != nil {
+// 		log.Fatalln(err)
+// 	}
+// 	fmt.Println()
+// 	fmt.Println("*n", *n)
+// 	fmt.Println("tmpn", tmpn)
+// 	fmt.Println("xw.n", xw.(*XWriter).N())
+// }
