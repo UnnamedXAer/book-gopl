@@ -20,8 +20,8 @@
 			"type": "go",
 			"request": "launch",
 			"mode": "debug",
-			"program": "${workspaceFolder}/ch7/sorting",
-			"args": []
+			"program": "${workspaceFolder}/ch7/ex7_18",
+			"args": ["<","d.html"]
 		}
 	]
 }
