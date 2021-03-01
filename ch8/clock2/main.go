@@ -38,6 +38,7 @@ func main() {
 func handleConn(c net.Conn) {
 	defer c.Close()
 	log.Printf("new connection to port %s by %s", *port, c.RemoteAddr())
+
 	for {
 		t := time.Now().In(loc)
 

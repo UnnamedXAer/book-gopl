@@ -4,124 +4,153 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-// var (
-// 	cd  = flag.String("cd", "", "path")
-// 	ls  = flag.String("ls", "", "path")
-// 	get = flag.String("get", "", "file path")
-// )
-
 var basePath string
 
+var cwd map[string]string
+
 func main() {
-	var w io.Writer = os.Stdout
-	var r io.Reader = os.Stdin
-	cwd, err := os.Getwd()
-	basePath = filepath.Clean(filepath.Join(cwd, "base"))
-	cwd = basePath
+	d, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("%q", err)
+		return
+	}
+	basePath = filepath.Clean(filepath.Join(d, "base"))
+	cwd = make(map[string]string, 10)
+
+	// as a server
+	listener, err := net.Listen("tcp", "localhost:3031")
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Fatalln(err)
+			continue
+		}
+		go handleCommand(conn)
+	}
+}
+
+func handleCommand(w net.Conn) {
+	if cwd[w.RemoteAddr().String()] == "" {
+		d, err := os.Getwd()
+		if err != nil {
+			fmt.Fprintf(w, "error: internal filesystem problem %q\n> ", err)
+			return
+		}
+		cwd[w.RemoteAddr().String()] = filepath.Join(d, "base")
 	}
 	fmt.Println(basePath)
 	log.Println("Welcome to ftp")
 	fmt.Print("\n> ")
-	scanner := bufio.NewScanner(r)
+	scanner := bufio.NewScanner(w)
 	for scanner.Scan() {
 		cmd := scanner.Text()
-		cmdParts := strings.Split(cmd, "=")
-		if len(cmdParts) > 2 {
-			fmt.Fprintf(w, "error: not recognized command %q\n> ", cmd)
-			continue
-		}
-		if len(cmdParts) == 0 {
-			continue
-		}
-		name := cmdParts[0]
+		execCmd(w, cmd)
+	}
+}
 
-		if len(cmdParts) == 1 {
-			switch name {
-			case "close":
-				log.Fatalln(w, "disconnecting...")
-				os.Exit(0)
-			case "ls":
-				s, err := ls(cwd, "")
-				if err != nil {
-					fmt.Fprintf(w, "error: %s\n> ", err)
-					continue
-				}
-				fmt.Fprintf(w, "%s\n> ", s)
-			default:
-				fmt.Fprintf(w, "error: not recognized command %q\n> ", cmdParts[0])
-			}
-			continue
-		}
-		value := cmdParts[1]
+func execCmd(w net.Conn, cmd string) {
+	log.Printf("command: %q\n", cmd)
+	cmdParts := strings.Split(cmd, "=")
+	if len(cmdParts) > 2 {
+		fmt.Fprintf(w, "error: not recognized command %q\n> ", cmd)
+		return
+	}
+	if len(cmdParts) == 0 || (len(cmdParts) == 1 && cmdParts[0] == "") {
+		return
+	}
+	name := cmdParts[0]
+
+	if len(cmdParts) == 1 {
 		switch name {
+		case "close":
+			log.Fatalln(w, "disconnecting...")
+			os.Exit(0)
 		case "ls":
-			s, err := ls(cwd, value)
+			s, err := ls(cwd[w.RemoteAddr().String()], "")
 			if err != nil {
 				fmt.Fprintf(w, "error: %s\n> ", err)
-				continue
+				return
 			}
-			fmt.Fprintf(w, "%s\n", s)
-		case "cd":
-			path := filepath.Join(cwd, value)
-			if err := checkAgainstBasePath(path); err != nil {
-				fmt.Fprintf(w, "error: %s\n> ", err)
-				continue
-			}
-			_, err := os.Stat(path)
-			if err != nil {
-				fmt.Fprintln(w, "error", err)
-				continue
-			}
-			cwd = path
-			fmt.Fprintf(w, "%s\n> ", path)
-		case "mkdir":
-			path := filepath.Join(cwd, value)
-			if err := checkAgainstBasePath(path); err != nil {
-				fmt.Fprintf(w, "error: %s\n> ", err)
-				continue
-			}
-			err := os.MkdirAll(path, 0644)
-			if err != nil {
-				fmt.Fprintf(w, "error: %s\n> ", err)
-				continue
-			}
-		case "get":
-			valParts := strings.Split(value, ">")
-			if len(valParts) != 2 {
-				fmt.Fprintf(w, "error: invalid value for get command %q\n> ", value)
-				continue
-			}
-			srcPath := filepath.Join(cwd, valParts[0])
-			if err := checkAgainstBasePath(srcPath); err != nil {
-				fmt.Fprintf(w, "error: %s\n> ", err)
-				continue
-			}
-
-			b, err := ioutil.ReadFile(srcPath)
-			if err != nil {
-				fmt.Fprintf(w, "error: %s\n> ", err)
-				continue
-			}
-
-			dstPath := filepath.Join("./", valParts[1])
-			err = ioutil.WriteFile(dstPath, b, 0644)
-			if err != nil {
-				fmt.Fprintf(w, "error: %s\n> ", err)
-				continue
-			}
+			fmt.Fprintf(w, "%s\n> ", s)
 		default:
 			fmt.Fprintf(w, "error: not recognized command %q\n> ", cmdParts[0])
 		}
+		return
+	}
+	value := cmdParts[1]
+	switch name {
+	case "ls":
+		s, err := ls(cwd[w.RemoteAddr().String()], value)
+		if err != nil {
+			fmt.Fprintf(w, "error: %s\n> ", err)
+			return
+		}
+		fmt.Fprintf(w, "%s\n", s)
+	case "cd":
+		path := filepath.Join(cwd[w.RemoteAddr().String()], value)
+		if err := checkAgainstBasePath(path); err != nil {
+			fmt.Fprintf(w, "error: %s\n> ", err)
+			return
+		}
+		_, err := os.Stat(path)
+		if err != nil {
+			fmt.Fprintln(w, "error", err)
+			return
+		}
+		cwd[w.RemoteAddr().String()] = path
+		fmt.Fprintf(w, "%s\n> ", path)
+	case "mkdir":
+		path := filepath.Join(cwd[w.RemoteAddr().String()], value)
+		if err := checkAgainstBasePath(path); err != nil {
+			fmt.Fprintf(w, "error: %s\n> ", err)
+			return
+		}
+		err := os.MkdirAll(path, 0666)
+		if err != nil {
+			fmt.Fprintf(w, "error: %s\n> ", err)
+			return
+		}
+		fmt.Fprintf(w, "%s\n> ", path)
+
+	case "get":
+		valParts := strings.Split(value, ">")
+		if len(valParts) != 2 {
+			fmt.Fprintf(w, "error: invalid value for get command %q\n> ", value)
+			return
+		}
+		srcPath := filepath.Join(cwd[w.RemoteAddr().String()], valParts[0])
+		if err := checkAgainstBasePath(srcPath); err != nil {
+			fmt.Fprintf(w, "error: %s\n> ", err)
+			return
+		}
+
+		b, err := ioutil.ReadFile(srcPath)
+		if err != nil {
+			fmt.Fprintf(w, "error: %s\n> ", err)
+			return
+		}
+
+		dstPath := filepath.Join("./", valParts[1])
+		err = ioutil.WriteFile(dstPath, b, 0644)
+		if err != nil {
+			fmt.Fprintf(w, "error: %s\n> ", err)
+			return
+		}
+		fmt.Fprintf(w, "%s\n> ", dstPath)
+	default:
+		fmt.Fprintf(w, "error: not recognized command %q\n> ", cmdParts[0])
 	}
 }
 
