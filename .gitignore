@@ -17,6 +17,9 @@
 *.go.html
 .env
 *.log
+*.png
+*.jpg
+*.jpeg
 
 # __debug_bin
 */**/__debug_bin
