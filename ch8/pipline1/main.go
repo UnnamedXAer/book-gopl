@@ -2,13 +2,12 @@ package main
 
 import (
 	"log"
-	"time"
 )
 
 func main() {
 
-	c := make(chan int)
-	cSqr := make(chan int)
+	c := make(chan int, 10)
+	cSqr := make(chan int, 5)
 	go counter(c)
 	go square(c, cSqr)
 
@@ -16,39 +15,33 @@ func main() {
 }
 
 func counter(c chan<- int) {
-	log.Println("counter", "- start")
+	log.Println("-C", "- start")
 	for i := 0; i < 10; i++ {
-		log.Println("counter - emit: ", i)
+		log.Println("-C - emit: ", i)
 		c <- i
-		time.Sleep(100 * time.Millisecond)
 	}
 	close(c)
-	log.Println("counter - end")
+	log.Println("-C - end")
 
 }
 
 func square(c <-chan int, cSqr chan<- int) {
-	log.Println("square ", "- start")
+	log.Println("- S ", "- start")
 	for n := range c {
 		sqr := n * n
-		time.Sleep(30 * (time.Millisecond))
-		log.Println("square - emit: ", sqr)
+		log.Println("- S - emit: ", sqr)
 		cSqr <- sqr
 	}
 	close(cSqr)
-	log.Println("square - end")
+	log.Println("- S - end")
 
 }
 
 func print(cSqr chan int) {
-	log.Println("print ", "- start")
-	for {
-		n, ok := <-cSqr
-		if ok == false {
-			break
-		}
-		log.Printf("print Sqr: %d", n)
+	log.Println("-   P ", "- start")
+	for n := range cSqr {
+		log.Printf("-   P - Sqr: %d", n)
 	}
-	log.Println("print - end")
+	log.Println("-   P - end")
 
 }
