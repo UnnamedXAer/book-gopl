@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sync"
 
 	"github.com/unnamedxaer/book-gopl/ch5/links"
 )
@@ -20,24 +19,23 @@ func main() {
 		worklist <- os.Args[1:]
 	}()
 
-	wg := sync.WaitGroup{}
-	wg.Add(20)
 	for i := 0; i < 20; i++ {
 		go func() {
 			for link := range unseenLinks {
 				foundLinks := crawl(link)
 				go func() { worklist <- foundLinks }()
 			}
-			wg.Done()
 		}()
 	}
-
 	// The main goroutine de-duplicates worklist items
 	// and sends the unseen ones to the crawlers.
 	seen := make(map[string]bool)
-	for list := range worklist {
+	n := 1
+	for ; n > 0; n-- {
+		list := <-worklist
 		for _, link := range list {
 			if !seen[link] {
+				n++
 				seen[link] = true
 				unseenLinks <- link
 			}
