@@ -18,22 +18,27 @@ func main() {
 	done := make(chan struct{})
 
 	go func() {
-		io.Copy(os.Stdout, conn) // temporarily ignore errors
+		_, err := io.Copy(os.Stdout, conn) // temporarily ignore errors
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "copy err: ", err)
+		}
 		log.Println("done")
 		done <- struct{}{} // signal the main goroutine
 	}()
 	mustCopy(conn, os.Stdin)
+	// conn.Close()
+	// log.Println("conn closed")
 	conn.(*net.TCPConn).CloseWrite()
-	log.Println("before done", 1)
+	log.Println("writer closed")
 	<-done // wait for background goroutine to finish
 	log.Println("done main")
 }
 
 func mustCopy(dst io.Writer, src io.Reader) {
-	fmt.Println("must copy")
+	log.Println("must copy")
 	_, err := io.Copy(dst, src)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
-	fmt.Println("must copy - end")
+	log.Println("must copy - end")
 }
