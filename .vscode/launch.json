@@ -11,8 +11,8 @@
 			"mode": "debug",
 			"program": "${file}",
 			"args": [
-				"https://developer.mozilla.org/en-US/docs/Learn/HTML/Multimedia_and_embedding/Responsive_images",
-				"https://pkg.go.dev/golang.org/x/net/html#example-Parse",
+				"-v",
+				"D:/node"
 			],
 		},
 		{
@@ -21,7 +21,7 @@
 			"request": "launch",
 			"mode": "debug",
 			"program": "${workspaceFolder}/ch7/ex7_18",
-			"args": ["<","d.html"]
+			"args": []
 		}
 	]
 }
