@@ -10,45 +10,60 @@ import (
 	"time"
 )
 
-func echo(c net.Conn, shout string, delay time.Duration, disconnect chan time.Time) {
-	fmt.Fprintln(c, "\t", strings.ToUpper(shout))
+func echo(c *net.TCPConn, shout string, delay time.Duration, clearTimer chan struct{}) {
+	_, err := fmt.Fprintln(c, "\t", strings.ToUpper(shout))
+	checkErr(1, err)
 	time.Sleep(delay)
-	fmt.Fprintln(c, "\t", shout)
+	_, err = fmt.Fprintln(c, "\t", shout)
+	checkErr(2, err)
 	time.Sleep(delay)
-	fmt.Fprintln(c, "\t", strings.ToLower(shout))
-	go func() {
-		x := <-time.After(10 * time.Second)
-		select {
-		case disconnect <- x:
-			c.(*net.TCPConn).Close()
-			log.Println(c.RemoteAddr().String(), " - CloseWrite")
-		}
+	_, err = fmt.Fprintln(c, "\t", strings.ToLower(shout))
+	checkErr(3, err)
 
-	}()
+	log.Println(time.Now().Format("15:04:05"))
+	go timeout(clearTimer, c)
+
 }
 
-func handleConn(c net.Conn) {
-	log.Println(c.RemoteAddr().String(), " - connected")
-	disconnect := make(chan time.Time)
-	input := bufio.NewScanner(c)
+func timeout(clearTimer chan struct{}, c *net.TCPConn) {
+	timeout := 5 * time.Second
+	endTime := time.Now().Add(timeout).Format("15:04:05")
+	log.Println("will timetout around", endTime)
 
-l:
-	for input.Scan() {
-		// disconnect = nil
-		go echo(c, input.Text(), 1*time.Second, disconnect)
-		select {
-		case <-disconnect:
-			log.Println("break")
-			break l
-		default:
+	select {
+	case <-time.After(timeout):
+		log.Println("closing by timeout", endTime)
+		err := c.Close()
+		if err != nil {
+			log.Printf("conn close: %v\n", err)
 		}
+		clearTimer = nil
+	case <-clearTimer:
+		log.Println("timeout cleared", endTime)
+
 	}
+
+	log.Println("exiting timeout", endTime)
+}
+
+func handleConn(c *net.TCPConn) {
+	log.Println(c.RemoteAddr().String(), " - connected")
+	input := bufio.NewScanner(c)
+	clearTimer := make(chan struct{})
+	go timeout(clearTimer, c)
+	for input.Scan() {
+		log.Println("T:", input.Text())
+		clearTimer <- struct{}{}
+		go echo(c, input.Text(), 1*time.Second, clearTimer)
+	}
+
+	log.Println("input: ", input.Err().Error())
+
 	// NOTE: ignoring potential errors from input.Err()
-	log.Println("final closing")
+	log.Println("final closing", c.RemoteAddr().String())
 	err := c.Close()
 	if err != nil {
-		log.Println(err)
-		return
+		log.Printf("conn close: %v\n", err)
 	}
 	log.Println(c.RemoteAddr().String(), " - closed")
 }
@@ -64,6 +79,13 @@ func main() {
 			log.Print(err) // e.g., connection aborted
 			continue
 		}
-		go handleConn(conn)
+		c := conn.(*net.TCPConn)
+		go handleConn(c)
+	}
+}
+
+func checkErr(d int, err error) {
+	if err != nil {
+		log.Printf("checkErr (%d): %v\n", d, err)
 	}
 }
