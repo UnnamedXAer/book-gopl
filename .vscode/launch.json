@@ -12,7 +12,7 @@
 			"program": "${file}",
 			"args": [
 				"-v",
-				"D:/node"
+				"https://outlook.live.com/mail/0/inbox"
 			],
 		},
 		{
