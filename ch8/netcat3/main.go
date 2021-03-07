@@ -22,7 +22,6 @@ func main() {
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "copy err: ", err)
 		}
-		log.Println("done")
 		done <- struct{}{} // signal the main goroutine
 	}()
 	mustCopy(conn, os.Stdin)
@@ -35,7 +34,6 @@ func main() {
 }
 
 func mustCopy(dst io.Writer, src io.Reader) {
-	log.Println("must copy")
 	_, err := io.Copy(dst, src)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
