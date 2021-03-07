@@ -30,11 +30,15 @@ type client struct {
 	ch  chan<- string // an outgoing message chanel
 	who string
 }
+type msg struct {
+	sender *client
+	s      string
+}
 
 var (
 	entering = make(chan *client)
 	leaving  = make(chan *client)
-	messages = make(chan string) // all incoming client messages
+	messages = make(chan msg) // all incoming client messages
 )
 
 func broadcaster() {
@@ -45,11 +49,19 @@ func broadcaster() {
 			// Broadcast incoming message to all
 			// client's outgoing message channels
 			for cli := range clients {
-				cli.ch <- msg
+				if msg.sender.who != cli.who {
+					select {
+					case cli.ch <- msg.s:
+					default:
+						fmt.Printf("message skipped from %q to %q \n", msg.sender.who, cli.who)
+					}
+				}
 			}
+			fmt.Println()
 		case cli := <-entering:
-			for idx := range clients {
-				cli.ch <- fmt.Sprintf("idx %v, v: %v", idx, idx.who)
+			cli.ch <- "Connected users:"
+			for c := range clients {
+				cli.ch <- fmt.Sprintf("%s", c.who)
 			}
 			clients[cli] = true
 
@@ -60,7 +72,7 @@ func broadcaster() {
 	}
 }
 
-var timeoutDuration = 1 * time.Minute
+var timeoutDuration = 15 * time.Minute
 
 // var cnt int
 // var mu = sync.Mutex{}
@@ -70,7 +82,7 @@ var timeoutDuration = 1 * time.Minute
 func handleConn(conn net.Conn) {
 	cliTimeout := timeoutDuration
 
-	ch := make(chan string)          // outgoing client messages
+	ch := make(chan string, 5)       // outgoing client messages, buffer for 5 messages
 	closeSignal := make(chan string) // chanel to send close message
 	timer := time.NewTimer(cliTimeout)
 	var who string = conn.RemoteAddr().String() + " (temporary name)"
@@ -91,18 +103,24 @@ func handleConn(conn net.Conn) {
 	go setTimeout(ch, closeSignal, timer, cliTimeout, who)
 
 	ch <- "You are: " + who
-	messages <- who + " has arrived"
 	cli := &client{
 		ch:  ch,
 		who: who,
 	}
+	messages <- msg{
+		sender: cli,
+		s:      who + " has arrived",
+	}
 	entering <- cli
 
-	go sendMessages(conn, closeSignal, timer, cliTimeout, who)
+	go sendMessages(conn, cli, closeSignal, timer, cliTimeout, who)
 
 	leaveMsg := <-closeSignal
 	leaving <- cli
-	messages <- who + leaveMsg
+	messages <- msg{
+		sender: cli,
+		s:      who + leaveMsg,
+	}
 	conn.Close()
 	fmt.Println(who + " disconnected")
 	fmt.Println("1 - END, handler", who)
@@ -167,6 +185,7 @@ func timeoutDisconnect(ch, closeSignal chan<- string) {
 // sendMessages sends client messages to the other connected clients
 func sendMessages(
 	conn net.Conn,
+	cli *client,
 	closeSignal chan string,
 	timer *time.Timer,
 	timeout time.Duration,
@@ -174,7 +193,9 @@ func sendMessages(
 	input := bufio.NewScanner(conn)
 	for input.Scan() {
 		timer.Reset(timeout)
-		messages <- who + ": " + input.Text()
+		messages <- msg{
+			sender: cli,
+			s:      who + ": " + input.Text()}
 	}
 	// note ignoring potential errors from input.Err()
 
