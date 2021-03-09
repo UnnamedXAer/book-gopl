@@ -2,11 +2,15 @@
 // memoization of a function of type Func.
 package memo
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
 // Memo caches th results of calling a Func.
 type Memo struct {
 	f     Func
+	mu    sync.Mutex
 	cache map[string]result
 }
 
@@ -24,14 +28,22 @@ func New(f Func) *Memo {
 }
 
 // Get returns a results from Memo f function for given key
-// either by calling it or from the cache
-// NOTE: not concurrency-safe!
+// either by calling it or from the cache.
+// concurrency-safe
 func (memo *Memo) Get(key string) (interface{}, error) {
+	memo.mu.Lock()
 	res, ok := memo.cache[key]
+	memo.mu.Unlock()
 	if ok == false {
 		fmt.Println("calling: ", key)
 		res.value, res.err = memo.f(key)
+
+		//Between the two critical sections, several goroutines
+		// may race to compute f(key) and update the map.
+		memo.mu.Lock()
 		memo.cache[key] = res
+		memo.mu.Unlock()
 	}
+
 	return res.value, res.err
 }

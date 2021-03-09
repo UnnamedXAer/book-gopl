@@ -55,11 +55,11 @@ func GetSequential(t *testing.T, m M) {
 
 	for url := range incomingURLs() {
 		start := time.Now()
-		value, err := m.Get("http://google.com")
+		value, err := m.Get(url)
 		if err != nil {
 			log.Println(err)
 		}
-		fmt.Printf("%s, %s, %d, bytes\n",
+		fmt.Printf("% 40s, % 15s, % 8d, bytes\n",
 			url, time.Since(start), len(value.([]byte)))
 	}
 }
@@ -73,11 +73,11 @@ func GetConcurrent(t *testing.T, m M) {
 		go func(url string) {
 			defer n.Done()
 			start := time.Now()
-			value, err := m.Get("http://google.com")
+			value, err := m.Get(url)
 			if err != nil {
 				log.Println(err)
 			}
-			fmt.Printf("%s, %s, %d, bytes\n",
+			fmt.Printf("% 40s, % 15s, % 8d, bytes\n",
 				url, time.Since(start), len(value.([]byte)))
 		}(url)
 	}
