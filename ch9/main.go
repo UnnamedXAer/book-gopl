@@ -1,19 +1,46 @@
 package main
 
+import (
+	"bufio"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"time"
+
+	memo "github.com/unnamedxaer/book-gopl/ch9/memo1"
+)
+
+func httpGetBody(url string) (interface{}, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	return ioutil.ReadAll(resp.Body)
+}
+
+func incomingURLs() []string {
+	input := bufio.NewScanner(os.Stdin)
+	s := []string{}
+	for input.Scan() {
+		s = append(s, input.Text())
+	}
+
+	return s
+}
+
 func main() {
 
-	// cooked := make(chan *cake1.Cake, 3)
-	// iced := make(chan *cake1.Cake, 3)
-	// delivered := make(chan *cake1.Cake, 3)
-
-	// for i := 0; i < 10; i++ {
-	// 	go cake1.Deliver(delivered, iced)
-	// 	go cake1.Icer(iced, cooked)
-	// 	go cake1.Baker(cooked)
-	// }
-
-	// for cake := range delivered {
-	// 	time.Sleep(500 * time.Millisecond)
-	// 	fmt.Println(cake)
-	// }
+	m := memo.New(httpGetBody)
+	for _, url := range incomingURLs() {
+		start := time.Now()
+		value, err := m.Get("http://google.com")
+		if err != nil {
+			log.Println(err)
+		}
+		fmt.Printf("%s, %s, %d, bytes\n",
+			url, time.Since(start), len(value.([]byte)))
+	}
 }
