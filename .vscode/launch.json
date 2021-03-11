@@ -20,7 +20,7 @@
 			"type": "go",
 			"request": "launch",
 			"mode": "debug",
-			"program": "${workspaceFolder}/ch7/ex7_18",
+			"program": "${workspaceFolder}/ch9/ex9_3_memo/main",
 			"args": []
 		}
 	]
