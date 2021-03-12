@@ -58,10 +58,10 @@ func (m *Memo) server(f Func) {
 func (e *entry) call(f Func, key string) {
 	fmt.Printf("calling: f(%q)\n", key)
 	// Evaluate the function
-	time.Sleep(1 * time.Second)
+	time.Sleep(4 * time.Second)
 	e.res.value, e.res.err = f(key)
 	fmt.Printf("f(%q) resolved\n", key)
-	time.Sleep(1 * time.Second)
+	time.Sleep(4 * time.Second)
 	// Broadcast the ready condition.
 	fmt.Printf("closing e.ready for f(%q)\n", key)
 	close(e.ready)
@@ -79,13 +79,13 @@ func (e *entry) deliver(response chan<- result) {
 // concurrency-safe
 func (memo *Memo) Get(key string, done Done) (interface{}, error) {
 	response := make(chan result)
-	var res result
+	// var res result
 	memo.requests <- request{key: key, response: response}
 	select {
 	case <-done:
-		fmt.Printf("function for key: %q was cancelled.\n", key)
+		// fmt.Printf("function for key: %q was cancelled.\n", key)
 		return nil, fmt.Errorf("memo.Get: call of the function for the %q key was cancelled", key)
-	case res = <-response:
+	case res := <-response:
+		return res.value, res.err
 	}
-	return res.value, res.err
 }
