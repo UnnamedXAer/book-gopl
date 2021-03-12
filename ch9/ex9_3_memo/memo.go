@@ -2,7 +2,6 @@ package memo
 
 import (
 	"fmt"
-	"time"
 )
 
 type entry struct {
@@ -14,6 +13,7 @@ type entry struct {
 type request struct {
 	key      string
 	response chan<- result // the client wants a single result
+	done     Done
 }
 
 type result struct {
@@ -30,7 +30,7 @@ type Memo struct {
 type Done chan struct{}
 
 // Func is the type og the function to memoize.
-type Func func(key string) (interface{}, error)
+type Func func(key string, done Done) (interface{}, error)
 
 // New returns a memoization of f. Clients must subsequently call Close.
 func New(f Func) *Memo {
@@ -49,21 +49,16 @@ func (m *Memo) server(f Func) {
 			// This is the first request for this key
 			e = &entry{ready: make(chan struct{})}
 			cache[req.key] = e
-			go e.call(f, req.key) // call f(key)
+			go e.call(f, req.key, req.done) // call f(key)
 		}
 		go e.deliver(req.response)
 	}
 }
 
-func (e *entry) call(f Func, key string) {
-	fmt.Printf("calling: f(%q)\n", key)
+func (e *entry) call(f Func, key string, done Done) {
 	// Evaluate the function
-	time.Sleep(4 * time.Second)
-	e.res.value, e.res.err = f(key)
-	fmt.Printf("f(%q) resolved\n", key)
-	time.Sleep(4 * time.Second)
+	e.res.value, e.res.err = f(key, done)
 	// Broadcast the ready condition.
-	fmt.Printf("closing e.ready for f(%q)\n", key)
 	close(e.ready)
 }
 
@@ -79,11 +74,9 @@ func (e *entry) deliver(response chan<- result) {
 // concurrency-safe
 func (memo *Memo) Get(key string, done Done) (interface{}, error) {
 	response := make(chan result)
-	// var res result
-	memo.requests <- request{key: key, response: response}
+	memo.requests <- request{key: key, response: response, done: done}
 	select {
 	case <-done:
-		// fmt.Printf("function for key: %q was cancelled.\n", key)
 		return nil, fmt.Errorf("memo.Get: call of the function for the %q key was cancelled", key)
 	case res := <-response:
 		return res.value, res.err

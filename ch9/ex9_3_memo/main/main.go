@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -11,13 +13,36 @@ import (
 	memo "github.com/unnamedxaer/book-gopl/ch9/ex9_3_memo"
 )
 
-func httpGetBody(url string) (interface{}, error) {
-	resp, err := http.Get(url)
+func httpGetBody(url string, done memo.Done) (interface{}, error) {
+	defer log.Println("httpGetBody - end", done, url)
+	token := make(memo.Done)
+	ctx, cancelReq := context.WithCancel(context.Background())
+	defer func() {
+		token <- struct{}{}
+	}()
+
+	go func() {
+		select {
+		case <-done:
+			log.Printf("cancelling request for %q", url)
+			cancelReq()
+			<-token
+		case <-token:
+		}
+	}()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	// close(done)
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-	return ioutil.ReadAll(resp.Body)
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("request fail: %s", res.Status)
+	}
+
+	return ioutil.ReadAll(res.Body)
 }
 
 var HTTPGetBody = httpGetBody
@@ -44,26 +69,48 @@ func incomingURLs() <-chan string {
 	return ch
 }
 
-func cancel(done memo.Done, key string) {
-	os.Stdin.Read(make([]byte, 1))
-	fmt.Printf(">> closing done for the key: %s\n", key)
-	close(done)
+func cancelFunc(done *memo.Done, key string) {
+	input := bufio.NewScanner(os.Stdin)
+	for input.Scan() {
+		log.Printf(">> closing done, triggered by user %v, %s\n", *done, key)
+		close(*done)
+	}
+	log.Println("@@@ leaving cancelFunc for", done, key)
 }
 
 func main() {
 	var m = memo.New(HTTPGetBody)
 
+	var done memo.Done = make(memo.Done)
+	output := []string{}
+	go cancelFunc(&done, "")
+
 	for url := range incomingURLs() {
+		done = make(memo.Done)
 		fmt.Println()
-		var done memo.Done = make(memo.Done)
-		key := url
-		go cancel(done, key)
+		// log.Println("address of done:", done, url)
+
 		start := time.Now()
 		value, err := m.Get(url, done)
 		if err != nil {
 			log.Println(err)
 		}
-		fmt.Printf("% 40s, % 15s, % 8d, bytes\n",
-			url, time.Since(start), len(value.([]byte)))
+		var n int
+		if value != nil {
+			n = len(value.([]byte))
+		}
+		output = append(output, fmt.Sprintf("% 40s, % 15s, % 8d, bytes\n",
+			url, time.Since(start), n))
+
+		select {
+		case <-done:
+
+		default:
+			// log.Println("about to close done at the end of the loop iteration", done)
+			close(done)
+		}
 	}
+
+	fmt.Println()
+	fmt.Println(output)
 }
