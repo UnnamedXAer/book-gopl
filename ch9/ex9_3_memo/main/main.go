@@ -14,7 +14,6 @@ import (
 )
 
 func httpGetBody(url string, done memo.Done) (interface{}, error) {
-	defer log.Println("httpGetBody - end", done, url)
 	token := make(memo.Done)
 	ctx, cancelReq := context.WithCancel(context.Background())
 	defer func() {
@@ -24,7 +23,6 @@ func httpGetBody(url string, done memo.Done) (interface{}, error) {
 	go func() {
 		select {
 		case <-done:
-			log.Printf("cancelling request for %q", url)
 			cancelReq()
 			<-token
 		case <-token:
@@ -32,7 +30,6 @@ func httpGetBody(url string, done memo.Done) (interface{}, error) {
 	}()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	// close(done)
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -72,10 +69,8 @@ func incomingURLs() <-chan string {
 func cancelFunc(done *memo.Done, key string) {
 	input := bufio.NewScanner(os.Stdin)
 	for input.Scan() {
-		log.Printf(">> closing done, triggered by user %v, %s\n", *done, key)
 		close(*done)
 	}
-	log.Println("@@@ leaving cancelFunc for", done, key)
 }
 
 func main() {
@@ -87,8 +82,6 @@ func main() {
 
 	for url := range incomingURLs() {
 		done = make(memo.Done)
-		fmt.Println()
-		// log.Println("address of done:", done, url)
 
 		start := time.Now()
 		value, err := m.Get(url, done)
@@ -103,10 +96,10 @@ func main() {
 			url, time.Since(start), n))
 
 		select {
+		// I'm not sure if this closing is necessary.
+		// Can anyone tell?
 		case <-done:
-
 		default:
-			// log.Println("about to close done at the end of the loop iteration", done)
 			close(done)
 		}
 	}

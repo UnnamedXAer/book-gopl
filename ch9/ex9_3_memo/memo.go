@@ -45,7 +45,7 @@ func (m *Memo) server(f Func) {
 	cache := make(map[string]*entry)
 	for req := range m.requests {
 		e := cache[req.key]
-		if e == nil {
+		if e == nil || e.res.value == nil {
 			// This is the first request for this key
 			e = &entry{ready: make(chan struct{})}
 			cache[req.key] = e
